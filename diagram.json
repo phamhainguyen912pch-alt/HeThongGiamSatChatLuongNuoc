@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "author": "Nhom 08 - De tai 51",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "wokwi-esp32-devkit-v1", "id": "esp", "top": 0, "left": 0, "attrs": {} },
+    { "type": "wokwi-potentiometer", "id": "pot_ph", "top": -120, "left": -180, "attrs": { "label": "pH (0-14)" } },
+    { "type": "wokwi-potentiometer", "id": "pot_do", "top": -30, "left": -180, "attrs": { "label": "DO (0-10 mg/L)" } },
+    { "type": "wokwi-potentiometer", "id": "pot_ntu", "top": 60, "left": -180, "attrs": { "label": "NTU (0-200)" } },
+    { "type": "wokwi-dht22", "id": "dht22", "top": -100, "left": 180, "attrs": {} },
+    { "type": "wokwi-hc-sr04", "id": "sonar", "top": 50, "left": 180, "attrs": {} }
+  ],
+  "connections": [
+    [ "pot_ph:GND", "esp:GND.1", "black", [ "v0" ] ],
+    [ "pot_ph:VCC", "esp:3V3", "red", [ "v0" ] ],
+    [ "pot_ph:SIG", "esp:D34", "green", [ "v0" ] ],
+
+    [ "pot_do:GND", "esp:GND.1", "black", [ "v0" ] ],
+    [ "pot_do:VCC", "esp:3V3", "red", [ "v0" ] ],
+    [ "pot_do:SIG", "esp:D35", "blue", [ "v0" ] ],
+
+    [ "pot_ntu:GND", "esp:GND.1", "black", [ "v0" ] ],
+    [ "pot_ntu:VCC", "esp:3V3", "red", [ "v0" ] ],
+    [ "pot_ntu:SIG", "esp:D32", "orange", [ "v0" ] ],
+
+    [ "dht22:GND", "esp:GND.2", "black", [ "v0" ] ],
+    [ "dht22:VCC", "esp:3V3", "red", [ "v0" ] ],
+    [ "dht22:SDA", "esp:D4", "yellow", [ "v0" ] ],
+
+    [ "sonar:GND", "esp:GND.2", "black", [ "v0" ] ],
+    [ "sonar:VCC", "esp:VIN", "red", [ "v0" ] ],
+    [ "sonar:TRIG", "esp:D5", "purple", [ "v0" ] ],
+    [ "sonar:ECHO", "esp:D18", "white", [ "v0" ] ]
+  ]
+}

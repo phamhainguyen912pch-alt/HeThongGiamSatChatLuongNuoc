@@ -1,0 +1,1971 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EIGHT - Hệ Thống Quan Trắc & Giám Sát Chất Lượng Nước Thông Minh</title>
+    <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 & Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --bg-outer: #edf2f9;
+            --bg-sidebar-start: #1d6fe9;
+            --bg-sidebar-mid: #148bf7;
+            --bg-sidebar-end: #38bdf8;
+            --sidebar-width: 250px;
+            
+            --color-primary: #0284c7;
+            --color-primary-light: #e0f2fe;
+            --color-primary-hover: #0369a1;
+            --color-success: #10b981;
+            --color-warning: #f59e0b;
+            --color-danger: #ef4444;
+            --color-dark: #0f172a;
+            --color-muted: #64748b;
+            --color-border: #f1f5f9;
+            --color-card-border: #e2e8f0;
+            
+            --radius-app: 28px;
+            --radius-card: 20px;
+            --radius-inner: 14px;
+            --shadow-app: 0 25px 60px rgba(15, 23, 42, 0.08);
+            --shadow-card: 0 4px 18px rgba(0, 0, 0, 0.03);
+            --shadow-card-hover: 0 10px 25px rgba(2, 132, 199, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-outer);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            color: var(--color-dark);
+            min-height: 100vh;
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Khung ứng dụng chính bo góc lớn */
+        .app-container {
+            width: 100%;
+            max-width: 1540px;
+            min-height: calc(100vh - 48px);
+            background: #ffffff;
+            border-radius: var(--radius-app);
+            box-shadow: var(--shadow-app);
+            overflow: hidden;
+            display: flex;
+            position: relative;
+        }
+
+        /* ======================================================== */
+        /* 1. SIDEBAR TRÁI GRADIENT XANH DƯƠNG AQUA                */
+        /* ======================================================== */
+        .app-sidebar {
+            width: var(--sidebar-width);
+            min-width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--bg-sidebar-start) 0%, var(--bg-sidebar-mid) 45%, var(--bg-sidebar-end) 100%);
+            color: #ffffff;
+            padding: 36px 22px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Logo thương hiệu AQUA */
+        .brand-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 40px;
+            padding-left: 6px;
+        }
+
+        .brand-logo-badge {
+            width: 44px;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.22);
+            backdrop-filter: blur(8px);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .brand-title {
+            font-size: 1.55rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: #ffffff;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Danh mục điều hướng Sidebar */
+        .sidebar-menu {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 18px;
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+            font-size: 0.94rem;
+            font-weight: 600;
+            border-radius: 14px;
+            transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .sidebar-link i {
+            font-size: 1.18rem;
+            transition: transform 0.2s;
+        }
+
+        .sidebar-link:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.16);
+            transform: translateX(3px);
+        }
+
+        .sidebar-link.active {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.24);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+            font-weight: 700;
+        }
+
+        .sidebar-link.active i {
+            transform: scale(1.1);
+        }
+
+        /* Nút Reset ở chân Sidebar */
+        .sidebar-footer {
+            padding-top: 20px;
+        }
+
+        .btn-sidebar-reset {
+            background: #ffffff;
+            color: #0284c7;
+            font-weight: 700;
+            font-size: 0.92rem;
+            border: none;
+            border-radius: 14px;
+            padding: 12px 18px;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .btn-sidebar-reset:hover {
+            background: #f8fafc;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            color: #0369a1;
+        }
+
+        /* ======================================================== */
+        /* 2. KHU VỰC NỘI DUNG CHÍNH (MAIN BODY)                   */
+        /* ======================================================== */
+        .app-main {
+            flex: 1;
+            background: #fbfdff;
+            padding: 32px 40px;
+            overflow-y: auto;
+            max-height: calc(100vh - 48px);
+        }
+
+        /* Thanh Header trên cùng */
+        .main-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 26px;
+            flex-wrap: wrap;
+        }
+
+        .welcome-title {
+            font-size: 1.45rem;
+            font-weight: 800;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 3px;
+        }
+
+        .welcome-sub {
+            font-size: 0.88rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        /* Các nút icon góc phải Header */
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .btn-bell {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: #f1f5f9;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            color: #475569;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-bell:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+
+        .bell-dot {
+            position: absolute;
+            top: 11px;
+            right: 12px;
+            width: 8px;
+            height: 8px;
+            background: #ef4444;
+            border-radius: 50%;
+            border: 1.5px solid #ffffff;
+        }
+
+        .user-pill {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #ffffff;
+            border: 1.5px solid #e2e8f0;
+            padding: 6px 14px 6px 8px;
+            border-radius: 30px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+        }
+
+        .user-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #0284c7, #38bdf8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        /* ======================================================== */
+        /* 3. HERO ANNOUNCEMENT BANNER                             */
+        /* ======================================================== */
+        .hero-banner {
+            background: linear-gradient(90deg, #38bdf8 0%, #0284c7 100%);
+            border-radius: var(--radius-inner);
+            padding: 22px 28px;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 28px;
+            box-shadow: 0 8px 24px rgba(2, 132, 199, 0.2);
+        }
+
+        .hero-banner::after {
+            content: '';
+            position: absolute;
+            right: -20px;
+            bottom: -50px;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .hero-content {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            z-index: 2;
+        }
+
+        .hero-badge-icon {
+            width: 58px;
+            height: 58px;
+            border-radius: 18px;
+            background: #ffffff;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: #0284c7;
+            flex-shrink: 0;
+        }
+
+        .hero-title {
+            font-size: 1.15rem;
+            font-weight: 800;
+            margin-bottom: 4px;
+            letter-spacing: -0.2px;
+        }
+
+        .hero-desc {
+            font-size: 0.88rem;
+            color: rgba(255, 255, 255, 0.92);
+            margin: 0;
+            max-width: 720px;
+        }
+
+        .carousel-indicator-dots {
+            display: flex;
+            gap: 6px;
+            z-index: 2;
+        }
+
+        .dot-pill {
+            height: 4px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.4);
+            transition: all 0.2s;
+        }
+
+        .dot-pill.active {
+            width: 24px;
+            background: #ffffff;
+        }
+
+        .dot-pill.inactive {
+            width: 10px;
+        }
+
+        /* Banner Báo Động Khẩn Cấp */
+        .alert-floating-bar {
+            border-radius: 14px;
+            padding: 14px 20px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            animation: pulseBanner 2s infinite ease-in-out;
+        }
+
+        @keyframes pulseBanner {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        .alert-floating-bar.is-critical {
+            background: #fef2f2;
+            border: 1.5px solid #fecaca;
+            color: #991b1b;
+        }
+
+        .alert-floating-bar.is-warning {
+            background: #fffbeb;
+            border: 1.5px solid #fde68a;
+            color: #92400e;
+        }
+
+        /* ======================================================== */
+        /* 4. GIAO DIỆN 2 CỘT DASHBOARD CHÍNH                      */
+        /* ======================================================== */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1.65fr 1fr;
+            gap: 28px;
+        }
+
+        @media (max-width: 1200px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .section-headline {
+            font-size: 1.12rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* 4 Thẻ tròn Metric Cards (2x2 Grid) */
+        .metrics-quad-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 26px;
+        }
+
+        .circular-metric-card {
+            background: #ffffff;
+            border: 1.5px solid #edf2f7;
+            border-radius: var(--radius-card);
+            padding: 20px 22px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            box-shadow: var(--shadow-card);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .circular-metric-card:hover {
+            border-color: #cbd5e1;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-card-hover);
+        }
+
+        /* Vòng tròn kép lồng nhau viền nét đứt */
+        .ring-icon-wrapper {
+            width: 62px;
+            height: 62px;
+            border-radius: 50%;
+            border: 2px dashed #38bdf8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .ring-icon-inner {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #f0f9ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #0284c7;
+            font-size: 1.35rem;
+        }
+
+        .metric-content-box {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .metric-big-num {
+            font-size: 1.7rem;
+            font-weight: 800;
+            color: #0284c7;
+            line-height: 1.1;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+        }
+
+        .metric-big-unit {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #64748b;
+        }
+
+        .metric-sub-label {
+            font-size: 0.82rem;
+            color: #64748b;
+            font-weight: 500;
+            line-height: 1.3;
+        }
+
+        /* Thẻ Biểu Đồ Xu Hướng Trực Tiếp (Left Chart) */
+        .chart-surface-card {
+            background: #ffffff;
+            border: 1.5px solid #edf2f7;
+            border-radius: var(--radius-card);
+            padding: 24px 26px;
+            box-shadow: var(--shadow-card);
+        }
+
+        .chart-header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+        }
+
+        .chart-time-pill {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 5px 14px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #475569;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* ======================================================== */
+        /* 6. CỘT PHẢI (GAUGE DONUT & WATER QUALITY METRICS)       */
+        /* ======================================================== */
+        .right-surface-card {
+            background: #ffffff;
+            border: 1.5px solid #edf2f7;
+            border-radius: var(--radius-card);
+            padding: 24px;
+            box-shadow: var(--shadow-card);
+            margin-bottom: 24px;
+        }
+
+        /* Biểu đồ tròn WQI Donut Gauge */
+        .donut-container {
+            position: relative;
+            width: 210px;
+            height: 210px;
+            margin: 10px auto 16px auto;
+        }
+
+        .donut-center-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .donut-center-sub {
+            font-size: 0.78rem;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .donut-center-score {
+            font-size: 2.1rem;
+            font-weight: 800;
+            color: #0284c7;
+            line-height: 1.1;
+        }
+
+        .donut-center-label {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #10b981;
+        }
+
+        /* Floating Tooltip Pill bên ngoài Donut */
+        .donut-tooltip-tag {
+            background: #ffffff;
+            border: 1.5px solid #e0f2fe;
+            border-radius: 12px;
+            padding: 8px 14px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #0284c7;
+            box-shadow: 0 4px 14px rgba(2, 132, 199, 0.12);
+            text-align: center;
+            margin: 0 auto;
+            width: fit-content;
+        }
+
+        /* 6 Hộp Thông Số Đo Đạc (Water Quality Metrics 2x3 Grid) */
+        .metrics-six-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .metric-box-clean {
+            background: #ffffff;
+            border: 1.5px solid #edf2f7;
+            border-radius: 16px;
+            padding: 16px 18px;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-box-clean:hover {
+            border-color: #93c5fd;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 14px rgba(2, 132, 199, 0.08);
+        }
+
+        .metric-box-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #64748b;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .metric-box-val {
+            font-size: 1.45rem;
+            font-weight: 800;
+            color: #0284c7;
+            line-height: 1.2;
+            margin-bottom: 3px;
+        }
+
+        .metric-box-norm {
+            font-size: 0.72rem;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+
+        /* ======================================================== */
+        /* 7. CÁC TAB KHÁC (BIỂU ĐỒ, CẢNH BÁO, DỮ LIỆU, GIẢ LẬP)   */
+        /* ======================================================== */
+        .tab-panel-view {
+            display: none;
+            animation: fadeIn 0.25s ease;
+        }
+
+        .tab-panel-view.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Bảng dữ liệu hiện đại bo góc */
+        .table-aqua {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .table-aqua th {
+            background: #f8fafc;
+            color: #475569;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 14px 18px;
+            border-bottom: 1.5px solid #e2e8f0;
+        }
+
+        .table-aqua td {
+            padding: 14px 18px;
+            font-size: 0.88rem;
+            color: #1e293b;
+            border-bottom: 1px solid #f1f5f9;
+            background: #ffffff;
+            transition: background 0.15s;
+        }
+
+        .table-aqua tr:hover td {
+            background: #f8fafc;
+        }
+
+        /* Nút Kịch Bản Giả Lập */
+        .scenario-card-btn {
+            background: #ffffff;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 18px 20px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .scenario-card-btn:hover {
+            border-color: #0284c7;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(2, 132, 199, 0.1);
+        }
+
+        .scenario-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            flex-shrink: 0;
+        }
+
+        /* Badge trạng thái bo tròn mềm */
+        .status-badge-soft {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-badge-soft.success {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .status-badge-soft.warning {
+            background: #fef3c7;
+            color: #b45309;
+        }
+
+        .status-badge-soft.danger {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+
+        <!-- ======================================================== -->
+        <!-- SIDEBAR TRÁI GRADIENT AQUA (THEO MẪU THIẾT KẾ)          -->
+        <!-- ======================================================== -->
+        <aside class="app-sidebar">
+            <div>
+                <!-- Brand Logo & Title -->
+                <div class="brand-header">
+                    <div class="brand-logo-badge">
+                        <i class="bi bi-droplet-fill"></i>
+                    </div>
+                    <span class="brand-title">EIGHT</span>
+                </div>
+
+                <!-- Menu Navigation -->
+                <nav>
+                    <ul class="sidebar-menu">
+                        <li>
+                            <a class="sidebar-link active" onclick="switchView('dashboard', this)">
+                                <i class="bi bi-grid-fill"></i>
+                                <span>Dashboard</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="sidebar-link" onclick="switchView('stations', this)">
+                                <i class="bi bi-geo-alt-fill"></i>
+                                <span>Trạm Quan Trắc</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="sidebar-link" onclick="switchView('charts', this)">
+                                <i class="bi bi-bar-chart-line-fill"></i>
+                                <span>Biểu Đồ Xu Hướng</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="sidebar-link" onclick="switchView('alerts', this)">
+                                <i class="bi bi-bell-fill"></i>
+                                <span>Nhật Ký Cảnh Báo</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="sidebar-link" onclick="switchView('history', this)">
+                                <i class="bi bi-table"></i>
+                                <span>Nhật Ký Đo Đạc</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="sidebar-link" onclick="switchView('scenarios', this)">
+                                <i class="bi bi-sliders"></i>
+                                <span>Giả Lập Kịch Bản</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="sidebar-link" onclick="switchView('qcvn', this)">
+                                <i class="bi bi-shield-check"></i>
+                                <span>Quy Chuẩn QCVN</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+
+            <!-- Footer Sidebar: Reset Button -->
+            <div class="sidebar-footer">
+                <button class="btn-sidebar-reset" onclick="resetDemo()">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                    <span>Reset Hệ Thống</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- ======================================================== -->
+        <!-- KHU VỰC NỘI DUNG CHÍNH (MAIN APPLICATION AREA)          -->
+        <!-- ======================================================== -->
+        <main class="app-main">
+
+            <!-- 1. Top Header -->
+            <header class="main-header">
+                <div>
+                    <h1 class="welcome-title">
+                        Welcome back, Nhóm 08 <span>👋</span>
+                    </h1>
+                    <p class="welcome-sub">Hệ thống quan trắc chất lượng nước sông, hồ thông minh • QCVN 08:2023/BTNMT</p>
+                </div>
+
+                <!-- Header Actions -->
+                <div class="header-actions">
+                    <button class="btn-bell" onclick="switchView('alerts', document.querySelectorAll('.sidebar-link')[3])" title="Xem thông báo cảnh báo">
+                        <i class="bi bi-bell"></i>
+                        <span class="bell-dot" id="header-bell-dot"></span>
+                    </button>
+
+                    <div class="user-pill">
+                        <div class="user-avatar">N8</div>
+                        <div class="d-none d-sm-block text-start">
+                            <div class="fw-bold text-dark" style="font-size: 0.82rem; line-height: 1.1;">Admin Team 08</div>
+                            <div class="text-muted" style="font-size: 0.72rem;">Online • MQTT Active</div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 2. Hero Announcement Banner -->
+            <section class="hero-banner">
+                <div class="hero-content">
+                    <div class="hero-badge-icon">
+                        <i class="bi bi-water"></i>
+                    </div>
+                    <div>
+                        <h2 class="hero-title">Hệ Thống Quan Trắc Nước Tự Động EIGHT — Đề Tài 51 (Nhóm 08)</h2>
+                        <p class="hero-desc">Thu thập dữ liệu cảm biến thời gian thực từ ESP32 Wokwi qua MQTT Broker • Tính toán WQI theo QĐ 1456/QĐ-TCMT & Cảnh báo ô nhiễm 3 cấp độ.</p>
+                    </div>
+                </div>
+                <div class="carousel-indicator-dots d-none d-md-flex">
+                    <span class="dot-pill inactive"></span>
+                    <span class="dot-pill active"></span>
+                    <span class="dot-pill inactive"></span>
+                </div>
+            </section>
+
+            <!-- 3. Thanh Thông Báo Khẩn Cấp (Hiện ra khi Báo Động Đỏ hoặc Cảnh Báo Vàng) -->
+            <div id="alert-banner" class="alert-floating-bar is-critical d-none">
+                <div class="d-flex align-items-center gap-3">
+                    <i class="bi bi-exclamation-triangle-fill fs-4" id="alert-icon"></i>
+                    <div>
+                        <strong id="alert-title" class="d-block" style="font-size: 0.95rem;">🚨 BÁO ĐỘNG ĐỎ: VƯỢT NGƯỠNG NGHIÊM TRỌNG</strong>
+                        <span id="alert-details" style="font-size: 0.85rem;">Phát hiện vi phạm liên tục 3 lần kế tiếp</span>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span id="alert-counter-badge" class="badge bg-danger text-white mono px-3 py-2">3/3 Lần</span>
+                    <button class="btn btn-sm btn-light fw-bold" onclick="resetDemo()">Khắc phục</button>
+                </div>
+            </div>
+
+            <!-- ======================================================== -->
+            <!-- VIEW 1: DASHBOARD CHÍNH (THEO MẪU ẢNH THAM KHẢO)       -->
+            <!-- ======================================================== -->
+            <div id="view-dashboard" class="tab-panel-view active">
+                <div class="dashboard-grid">
+
+                    <!-- CỘT TRÁI: 4 Circular Metric Cards + Realtime Chart -->
+                    <div>
+                        <div class="section-headline">
+                            <span>Chỉ Số Vận Hành Trọng Yếu</span>
+                            <span class="badge status-badge-soft success" id="header-status-badge">
+                                <i class="bi bi-check-circle-fill"></i> BÌNH THƯỜNG
+                            </span>
+                        </div>
+
+                        <!-- 4 Circular Metric Cards (2x2 Grid) -->
+                        <div class="metrics-quad-grid">
+                            <!-- Card 1: WQI Score -->
+                            <div class="circular-metric-card">
+                                <div class="ring-icon-wrapper">
+                                    <div class="ring-icon-inner">
+                                        <i class="bi bi-graph-up-arrow"></i>
+                                    </div>
+                                </div>
+                                <div class="metric-content-box">
+                                    <div class="metric-big-num mono" id="quad-val-wqi">
+                                        100 <span class="metric-big-unit">Điểm</span>
+                                    </div>
+                                    <div class="metric-sub-label" id="quad-desc-wqi">
+                                        Rất tốt (Mức A) • Cấp nước sinh hoạt
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card 2: Mực Nước -->
+                            <div class="circular-metric-card">
+                                <div class="ring-icon-wrapper" style="border-color: #6366f1;">
+                                    <div class="ring-icon-inner" style="background: #eef2ff; color: #6366f1;">
+                                        <i class="bi bi-layers-fill"></i>
+                                    </div>
+                                </div>
+                                <div class="metric-content-box">
+                                    <div class="metric-big-num mono" id="quad-val-level" style="color: #6366f1;">
+                                        1.50 <span class="metric-big-unit">m</span>
+                                    </div>
+                                    <div class="metric-sub-label">
+                                        Mực nước cọc đo • Chuẩn an toàn 0.5 - 2.5m
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card 3: Trạng thái & Vi phạm liên tiếp -->
+                            <div class="circular-metric-card">
+                                <div class="ring-icon-wrapper" style="border-color: #10b981;" id="quad-ring-violation">
+                                    <div class="ring-icon-inner" style="background: #ecfdf5; color: #10b981;" id="quad-inner-violation">
+                                        <i class="bi bi-shield-check"></i>
+                                    </div>
+                                </div>
+                                <div class="metric-content-box">
+                                    <div class="metric-big-num mono" id="quad-val-violations" style="color: #10b981;">
+                                        0/3 <span class="metric-big-unit">Lần</span>
+                                    </div>
+                                    <div class="metric-sub-label" id="quad-desc-violations">
+                                        Bộ đếm vi phạm liên tiếp • An toàn 0/2
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card 4: Oxy hòa tan DO -->
+                            <div class="circular-metric-card">
+                                <div class="ring-icon-wrapper" style="border-color: #0ea5e9;">
+                                    <div class="ring-icon-inner" style="background: #f0f9ff; color: #0284c7;">
+                                        <i class="bi bi-droplet-half"></i>
+                                    </div>
+                                </div>
+                                <div class="metric-content-box">
+                                    <div class="metric-big-num mono" id="quad-val-do" style="color: #0284c7;">
+                                        6.80 <span class="metric-big-unit">mg/L</span>
+                                    </div>
+                                    <div class="metric-sub-label">
+                                        Oxy hòa tan DO • Đạt chuẩn QCVN (≥ 5.0)
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Realtime Spline Line Chart ("Your Ward - Water Usage" style) -->
+                        <div class="chart-surface-card">
+                            <div class="chart-header-row">
+                                <div>
+                                    <h3 class="fw-bold mb-1 text-dark" style="font-size: 1.05rem;">Biến Thiên Chỉ Số Nước Thời Gian Thực</h3>
+                                    <span class="text-muted small">Cập nhật tự động liên tục dạng sóng mỗi 5 giây</span>
+                                </div>
+                                <div class="chart-time-pill">
+                                    <i class="bi bi-calendar3"></i>
+                                    <span id="chart-date-tag">Jan - Dec 2026</span>
+                                </div>
+                            </div>
+                            <div style="height: 250px; position: relative;">
+                                <canvas id="chartTrendSpline"></canvas>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- CỘT PHẢI: WQI Radial Gauge + 6 Water Quality Metrics -->
+                    <div>
+                        <!-- 1. Circular WQI Donut Gauge -->
+                        <div class="right-surface-card text-center">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-bold text-dark" style="font-size: 0.95rem;">Chất Lượng Nước Tổng Thể</span>
+                                <span class="text-muted small fw-semibold">Hôm nay <i class="bi bi-chevron-down"></i></span>
+                            </div>
+
+                            <div class="donut-container">
+                                <canvas id="donutWqi"></canvas>
+                                <div class="donut-center-text">
+                                    <div class="donut-center-sub">Chỉ Số WQI</div>
+                                    <div class="donut-center-score mono" id="donut-val-score">100</div>
+                                    <div class="donut-center-label" id="donut-val-label">Rất Tốt</div>
+                                </div>
+                            </div>
+
+                            <div class="donut-tooltip-tag" id="donut-tooltip-tag">
+                                <i class="bi bi-check2-circle me-1"></i> <span id="donut-tooltip-text">Nước đạt chuẩn sinh hoạt</span>
+                            </div>
+                        </div>
+
+                        <!-- 2. Water Quality Metrics (6-pack Grid) -->
+                        <div class="right-surface-card">
+                            <div class="fw-bold text-dark mb-3" style="font-size: 0.95rem;">
+                                Water Quality Metrics (Chi Tiết Cảm Biến)
+                            </div>
+
+                            <div class="metrics-six-grid">
+                                <!-- 1. pH -->
+                                <div class="metric-box-clean">
+                                    <div class="metric-box-title">
+                                        <span>ĐỘ pH</span>
+                                        <i class="bi bi-eyedropper text-muted"></i>
+                                    </div>
+                                    <div class="metric-box-val mono" id="val-ph">7.35</div>
+                                    <div class="metric-box-norm">QCVN: 6.0 – 8.5</div>
+                                </div>
+
+                                <!-- 2. DO -->
+                                <div class="metric-box-clean">
+                                    <div class="metric-box-title">
+                                        <span>OXY HÒA TAN</span>
+                                        <i class="bi bi-wind text-muted"></i>
+                                    </div>
+                                    <div class="metric-box-val mono" id="val-do">6.80</div>
+                                    <div class="metric-box-norm">mg/L • QCVN: ≥ 5.0</div>
+                                </div>
+
+                                <!-- 3. TSS -->
+                                <div class="metric-box-clean">
+                                    <div class="metric-box-title">
+                                        <span>CHẤT RẮN TSS</span>
+                                        <i class="bi bi-filter-circle text-muted"></i>
+                                    </div>
+                                    <div class="metric-box-val mono" id="val-tss">32.0</div>
+                                    <div class="metric-box-norm">mg/L • Chuẩn: ≤ 100</div>
+                                </div>
+
+                                <!-- 4. NTU -->
+                                <div class="metric-box-clean">
+                                    <div class="metric-box-title">
+                                        <span>ĐỘ ĐỤC NTU</span>
+                                        <i class="bi bi-disc text-muted"></i>
+                                    </div>
+                                    <div class="metric-box-val mono" id="val-ntu">27.4</div>
+                                    <div class="metric-box-norm">NTU • 0 – 200 NTU</div>
+                                </div>
+
+                                <!-- 5. Nhiệt độ -->
+                                <div class="metric-box-clean">
+                                    <div class="metric-box-title">
+                                        <span>NHIỆT ĐỘ</span>
+                                        <i class="bi bi-thermometer-half text-muted"></i>
+                                    </div>
+                                    <div class="metric-box-val mono" id="val-temp">27.6</div>
+                                    <div class="metric-box-norm">°C • Chuẩn: 24 – 32°C</div>
+                                </div>
+
+                                <!-- 6. Mực nước -->
+                                <div class="metric-box-clean">
+                                    <div class="metric-box-title">
+                                        <span>MỰC NƯỚC</span>
+                                        <i class="bi bi-water text-muted"></i>
+                                    </div>
+                                    <div class="metric-box-val mono" id="val-level">1.50</div>
+                                    <div class="metric-box-norm">m • An toàn: 0.5 – 2.5m</div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ======================================================== -->
+            <!-- VIEW 2: TRẠM QUAN TRẮC (STATIONS OVERVIEW)              -->
+            <!-- ======================================================== -->
+            <div id="view-stations" class="tab-panel-view">
+                <div class="section-headline">
+                    <span>Mạng Lưới Các Trạm Quan Trắc Tự Động</span>
+                    <button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="loadStations()">
+                        <i class="bi bi-arrow-clockwise me-1"></i> Làm mới danh sách
+                    </button>
+                </div>
+
+                <div class="row g-4 align-items-stretch" id="stations-grid-full">
+                    <!-- Nạp động qua JS -->
+                </div>
+            </div>
+
+            <!-- ======================================================== -->
+            <!-- VIEW 3: BIỂU ĐỒ NÂNG CAO (ADVANCED CHARTS)              -->
+            <!-- ======================================================== -->
+            <div id="view-charts" class="tab-panel-view">
+                <div class="section-headline">
+                    <span>Phân Tích Đồ Thị Chuyên Sâu (Multi-Axis)</span>
+                    <span class="badge bg-light text-dark border">Đang xem: <b id="adv-chart-station-name">Trạm 01</b></span>
+                </div>
+
+                <div class="row g-4">
+                    <!-- Biểu đồ 1: pH & DO -->
+                    <div class="col-lg-6">
+                        <div class="chart-surface-card">
+                            <div class="chart-header-row">
+                                <div>
+                                    <h4 class="fw-bold mb-1 text-dark" style="font-size: 1rem;"><i class="bi bi-bezier2 text-primary me-2"></i>Nhóm Hóa Sinh: pH & DO</h4>
+                                    <span class="small text-muted">Ngưỡng QCVN: pH (6.0 – 8.5) • DO (≥ 5.0 mg/L)</span>
+                                </div>
+                            </div>
+                            <div style="height: 300px;">
+                                <canvas id="chartWaterQuality"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Biểu đồ 2: TSS, Nhiệt độ & Mực nước -->
+                    <div class="col-lg-6">
+                        <div class="chart-surface-card">
+                            <div class="chart-header-row">
+                                <div>
+                                    <h4 class="fw-bold mb-1 text-dark" style="font-size: 1rem;"><i class="bi bi-water text-primary me-2"></i>Nhóm Vật Lý & Thủy Văn</h4>
+                                    <span class="small text-muted">TSS (mg/L), Nhiệt độ (°C) & Mực nước (m)</span>
+                                </div>
+                            </div>
+                            <div style="height: 300px;">
+                                <canvas id="chartPhysical"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ======================================================== -->
+            <!-- VIEW 4: NHẬT KÝ CẢNH BÁO (ALERTS LOG)                   -->
+            <!-- ======================================================== -->
+            <div id="view-alerts" class="tab-panel-view">
+                <div class="chart-surface-card">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 pb-3 border-bottom">
+                        <div>
+                            <h3 class="fw-bold mb-1 text-dark" style="font-size: 1.15rem;"><i class="bi bi-bell-fill text-danger me-2"></i>Nhật Ký Cảnh Báo Ô Nhiễm (Bảng canh_bao)</h3>
+                            <span class="text-muted small">Tự động ghi nhận khi chỉ tiêu vượt ngưỡng chuẩn QCVN 08:2023/BTNMT</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <select id="filter-alert-station" class="form-select form-select-sm border shadow-sm" style="width: 170px;" onchange="loadAlerts()">
+                                <option value="all">Tất cả các trạm</option>
+                                <option value="1">Trạm 01 (Sông SG)</option>
+                                <option value="2">Trạm 02 (Sông ĐN)</option>
+                                <option value="3">Trạm 03 (Hồ Trị An)</option>
+                            </select>
+                            <a href="/api/export/csv?type=canh_bao" class="btn btn-sm btn-outline-primary rounded-pill px-3 shadow-sm">
+                                <i class="bi bi-download me-1"></i> Xuất CSV
+                            </a>
+                            <button class="btn btn-sm btn-outline-danger rounded-pill px-3 shadow-sm" onclick="clearAlerts()">
+                                <i class="bi bi-trash3 me-1"></i> Xóa lịch sử
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table-aqua">
+                            <thead>
+                                <tr>
+                                    <th>Thời Gian</th>
+                                    <th>Trạm Quan Trắc</th>
+                                    <th>Chỉ Tiêu Vi Phạm</th>
+                                    <th>Giá Trị Đo</th>
+                                    <th>Ngưỡng QCVN</th>
+                                    <th>Mức Độ</th>
+                                    <th>Trạng Thái</th>
+                                </tr>
+                            </thead>
+                            <tbody id="alerts-table-body">
+                                <tr><td colspan="7" class="text-center text-muted py-4">Chưa có cảnh báo vi phạm nào. Môi trường nước an toàn.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ======================================================== -->
+            <!-- VIEW 5: NHẬT KÝ ĐO ĐẠC CHI TIẾT (DATA HISTORY)          -->
+            <!-- ======================================================== -->
+            <div id="view-history" class="tab-panel-view">
+                <div class="chart-surface-card">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 pb-3 border-bottom">
+                        <div>
+                            <h3 class="fw-bold mb-1 text-dark" style="font-size: 1.15rem;"><i class="bi bi-table text-primary me-2"></i>Dữ Liệu Quan Trắc Thời Gian Thực (Bảng do_luong)</h3>
+                            <span class="text-muted small">Cơ sở dữ liệu SQLite lưu vết đầy đủ mọi lần đo và chỉ số WQI</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <a href="/api/export/csv?type=do_luong" class="btn btn-sm btn-outline-primary rounded-pill px-3 shadow-sm">
+                                <i class="bi bi-file-earmark-spreadsheet me-1"></i> Tải CSV Báo Cáo
+                            </a>
+                            <button class="btn btn-sm btn-light border rounded-pill px-3" onclick="loadHistory()">
+                                <i class="bi bi-arrow-clockwise"></i> Làm mới
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table-aqua">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Thời Gian</th>
+                                    <th>Trạm</th>
+                                    <th>pH</th>
+                                    <th>DO (mg/L)</th>
+                                    <th>TSS (mg/L)</th>
+                                    <th>Nhiệt Độ (°C)</th>
+                                    <th>Mực Nước (m)</th>
+                                    <th>WQI</th>
+                                    <th>Đánh Giá</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-table-body">
+                                <tr><td colspan="10" class="text-center text-muted py-4">Đang tải lịch sử dữ liệu...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ======================================================== -->
+            <!-- VIEW 6: BỘ GIẢ LẬP KỊCH BẢN THUYẾT TRÌNH (DEMO SCENARIOS)-->
+            <!-- ======================================================== -->
+            <div id="view-scenarios" class="tab-panel-view">
+                <div class="section-headline">
+                    <span>Bộ Kịch Bản Giả Lập Nhanh Phục Vụ Thuyết Trình</span>
+                    <span class="badge bg-light text-muted border">Kích hoạt trực tiếp vào Trạm đang chọn</span>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6 col-lg-4">
+                        <button class="scenario-card-btn" onclick="triggerScenario('normal')">
+                            <div class="scenario-icon" style="background: #ecfdf5; color: #10b981;">
+                                <i class="bi bi-check-circle-fill"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold text-dark">1. Nước Đạt Chuẩn</div>
+                                <div class="text-muted small">pH 7.35, DO 6.8, TSS 42, WQI ~ 100 Tốt</div>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="col-md-6 col-lg-4">
+                        <button class="scenario-card-btn" onclick="triggerScenario('acid_waste')">
+                            <div class="scenario-icon" style="background: #fee2e2; color: #ef4444;">
+                                <i class="bi bi-radioactive"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold text-dark">2. Ô Nhiễm Axit Xả Thải</div>
+                                <div class="text-muted small">pH 4.20, DO 3.10 -> Vi phạm liên tiếp & Báo động đỏ</div>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="col-md-6 col-lg-4">
+                        <button class="scenario-card-btn" onclick="triggerScenario('dirty_runoff')">
+                            <div class="scenario-icon" style="background: #fef3c7; color: #f59e0b;">
+                                <i class="bi bi-moisture"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold text-dark">3. Ô Nhiễm Độ Đục / TSS</div>
+                                <div class="text-muted small">TSS 174 mg/L sau mưa lũ cuốn trôi phù sa</div>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="col-md-6 col-lg-4">
+                        <button class="scenario-card-btn" onclick="triggerScenario('flood')">
+                            <div class="scenario-icon" style="background: #eff6ff; color: #3b82f6;">
+                                <i class="bi bi-tsunami"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold text-dark">4. Cảnh Báo Nguy Cơ Lũ</div>
+                                <div class="text-muted small">Mực nước 2.88 m > 2.5 m cảnh báo ngập lụt</div>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="col-md-6 col-lg-4">
+                        <button class="scenario-card-btn" onclick="triggerScenario('drought')">
+                            <div class="scenario-icon" style="background: #fff7ed; color: #ea580c;">
+                                <i class="bi bi-sun"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold text-dark">5. Cảnh Báo Khô Hạn</div>
+                                <div class="text-muted small">Mực nước 0.35 m < 0.5 m cảnh báo cạn kiệt đáy</div>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="col-md-6 col-lg-4">
+                        <button class="scenario-card-btn" onclick="triggerScenario('hot_water')">
+                            <div class="scenario-icon" style="background: #fdf2f8; color: #db2777;">
+                                <i class="bi bi-fire"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold text-dark">6. Ô Nhiễm Nhiệt Công Nghiệp</div>
+                                <div class="text-muted small">Nhiệt độ 37.8°C làm giảm nồng độ oxy hòa tan</div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ======================================================== -->
+            <!-- VIEW 7: QUY CHUẨN KỸ THUẬT QCVN 08:2023                 -->
+            <!-- ======================================================== -->
+            <div id="view-qcvn" class="tab-panel-view">
+                <div class="chart-surface-card">
+                    <h3 class="fw-bold text-dark mb-2" style="font-size: 1.15rem;"><i class="bi bi-shield-check text-primary me-2"></i>Quy Chuẩn Kỹ Thuật Quốc Gia QCVN 08:2023/BTNMT</h3>
+                    <p class="text-muted small mb-4">Áp dụng cho Chất lượng nước mặt sông, hồ theo quy định của Bộ Tài nguyên và Môi trường</p>
+
+                    <div class="table-responsive mb-4">
+                        <table class="table-aqua">
+                            <thead>
+                                <tr>
+                                    <th>Thông số</th>
+                                    <th>Đơn vị</th>
+                                    <th>Ngưỡng QCVN 08:2023</th>
+                                    <th>Mục đích bảo vệ</th>
+                                    <th>Ghi chú tính toán WQI</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Độ pH</strong></td>
+                                    <td>pH</td>
+                                    <td><span class="badge bg-success">6.0 – 8.5</span></td>
+                                    <td>Môi trường sống thủy sinh & Cấp nước</td>
+                                    <td>Trọng số 0.30 • Gating yếu tố giới hạn khi < 4.5 hoặc > 10.5</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Oxy hòa tan (DO)</strong></td>
+                                    <td>mg/L</td>
+                                    <td><span class="badge bg-success">≥ 5.0</span></td>
+                                    <td>Hô hấp của cá & sinh vật nước</td>
+                                    <td>Trọng số 0.35 • Khống chế trần nguy hại khi < 2.0 mg/L</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Chất rắn lơ lửng (TSS)</strong></td>
+                                    <td>mg/L</td>
+                                    <td><span class="badge bg-success">Sông ≤ 100 | Hồ ≤ 30</span></td>
+                                    <td>Độ trong & bùn lắng lòng sông</td>
+                                    <td>Trọng số 0.25 • Quy đổi từ độ đục NTU: TSS ≈ NTU × 1.2</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Nhiệt độ nước</strong></td>
+                                    <td>°C</td>
+                                    <td><span class="badge bg-success">24.0 – 32.0</span></td>
+                                    <td>Cân bằng nhiệt sinh thái</td>
+                                    <td>Trọng số 0.10 • Cảnh báo xả thải làm mát nhà máy</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Mực nước quan trắc</strong></td>
+                                    <td>m</td>
+                                    <td><span class="badge bg-success">0.5 – 2.5</span></td>
+                                    <td>An toàn thủy văn & phòng chống thiên tai</td>
+                                    <td>> 2.5m: Cảnh báo Lũ | < 0.5m: Cảnh báo Hạn hán</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+    </div>
+
+    <!-- AUDIO BÁO ĐỘNG SỰ CỐ -->
+    <audio id="alarm-sound" preload="auto">
+        <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- ======================================================== -->
+    <!-- JAVASCRIPT ĐỒNG BỘ DỮ LIỆU THỜI GIAN THỰC               -->
+    <!-- ======================================================== -->
+    <script>
+        let currentSelectedStation = 1;
+        let chartSpline = null;
+        let chartDonut = null;
+        let chart1 = null;
+        let chart2 = null;
+
+        // Khởi tạo các biểu đồ Chart.js
+        function initCharts() {
+            // 1. Biểu đồ Spline Line Chart ở Cột Trái (Giống "Your Ward - Water Usage")
+            const ctxSpline = document.getElementById('chartTrendSpline').getContext('2d');
+            
+            // Gradient fill mềm mại dưới đường cong
+            const gradientFill = ctxSpline.createLinearGradient(0, 0, 0, 240);
+            gradientFill.addColorStop(0, 'rgba(56, 189, 248, 0.35)');
+            gradientFill.addColorStop(1, 'rgba(56, 189, 248, 0.00)');
+
+            chartSpline = new Chart(ctxSpline, {
+                type: 'line',
+                data: {
+                    labels: ['15:00', '15:05', '15:10', '15:15', '15:20', '15:25', '15:30', '15:35', '15:40', '15:45'],
+                    datasets: [{
+                        label: 'Chỉ số WQI',
+                        data: [92, 95, 96, 94, 98, 97, 100, 98, 99, 100],
+                        borderColor: '#0284c7',
+                        borderWidth: 2.8,
+                        backgroundColor: gradientFill,
+                        fill: true,
+                        tension: 0.42, // Đường cong mượt mà chuẩn spline
+                        pointRadius: 3,
+                        pointBackgroundColor: '#0284c7',
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.88)',
+                            titleFont: { family: 'Plus Jakarta Sans', weight: '700' },
+                            bodyFont: { family: 'JetBrains Mono' },
+                            padding: 10,
+                            displayColors: false,
+                            callbacks: {
+                                label: (ctx) => `WQI: ${ctx.parsed.y} / 100 Điểm`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { family: 'Plus Jakarta Sans', size: 11 }, color: '#94a3b8' }
+                        },
+                        y: {
+                            min: 0,
+                            max: 100,
+                            grid: { color: '#f1f5f9', borderDash: [4, 4] },
+                            ticks: { stepSize: 25, font: { family: 'Plus Jakarta Sans', size: 11 }, color: '#94a3b8' }
+                        }
+                    }
+                }
+            });
+
+            // 2. Biểu đồ WQI Radial Donut Gauge (Cột Phải)
+            const ctxDonut = document.getElementById('donutWqi').getContext('2d');
+            chartDonut = new Chart(ctxDonut, {
+                type: 'doughnut',
+                data: {
+                    labels: ['WQI Score', 'Remaining'],
+                    datasets: [{
+                        data: [100, 0],
+                        backgroundColor: ['#0284c7', '#f1f5f9'],
+                        borderWidth: 0,
+                        borderRadius: 8,
+                        cutout: '78%'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false }
+                    }
+                }
+            });
+
+            // 3. Biểu đồ nâng cao View Charts
+            const ctx1 = document.getElementById('chartWaterQuality').getContext('2d');
+            chart1 = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        { label: 'pH (6.0-8.5)', borderColor: '#0d9488', data: [], tension: 0.35, yAxisID: 'y1' },
+                        { label: 'DO (≥5 mg/L)', borderColor: '#0284c7', data: [], tension: 0.35, yAxisID: 'y2' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y1: { min: 0, max: 14, position: 'left' },
+                        y2: { min: 0, max: 12, position: 'right' }
+                    }
+                }
+            });
+
+            const ctx2 = document.getElementById('chartPhysical').getContext('2d');
+            chart2 = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        { label: 'TSS (mg/L)', borderColor: '#f59e0b', data: [], tension: 0.35 },
+                        { label: 'Mực nước (m)', borderColor: '#6366f1', data: [], tension: 0.35 },
+                        { label: 'Nhiệt độ (°C)', borderColor: '#ef4444', data: [], tension: 0.35 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        // Chuyển đổi View qua Sidebar
+        function switchView(viewId, element) {
+            document.querySelectorAll('.tab-panel-view').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+
+            const targetView = document.getElementById(`view-${viewId}`);
+            if (targetView) targetView.classList.add('active');
+            if (element) element.classList.add('active');
+
+            if (viewId === 'alerts') loadAlerts();
+            if (viewId === 'history') loadHistory();
+            if (viewId === 'stations') loadStations();
+        }
+
+        // Chọn Trạm Quan Trắc
+        function selectStation(stationId) {
+            currentSelectedStation = stationId;
+            document.querySelectorAll('.station-pill-btn').forEach((btn, idx) => {
+                if (idx + 1 === stationId) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+
+            const advStation = document.getElementById('adv-chart-station-name');
+            if (advStation) advStation.innerText = `Trạm 0${stationId}`;
+
+            fetch(`/api/stations/${stationId}/history`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.length > 0) {
+                    const latest = data[data.length - 1];
+                    updateDashboardUI(latest);
+                }
+            });
+        }
+
+        // Nạp danh sách trạm
+        function loadStations() {
+            fetch('/api/stations')
+            .then(res => res.json())
+            .then(stations => {
+                const container = document.getElementById('station-pills-container');
+                const fullGrid = document.getElementById('stations-grid-full');
+
+                if (container) {
+                    container.innerHTML = stations.map(s => {
+                        const isNormal = s.status === 'NORMAL';
+                        const dotColor = isNormal ? '#10b981' : (s.status === 'WARNING' ? '#f59e0b' : '#ef4444');
+                        const isActive = s.id === currentSelectedStation ? 'active' : '';
+                        return `
+                            <button class="station-pill-btn ${isActive}" onclick="selectStation(${s.id})">
+                                <span class="status-mini-dot" style="background: ${dotColor};"></span>
+                                <span>${s.ten_tram}</span>
+                            </button>
+                        `;
+                    }).join('');
+                }
+
+                if (fullGrid) {
+                    fullGrid.innerHTML = stations.map(s => {
+                        const statusClass = s.status === 'NORMAL' ? 'success' : (s.status === 'WARNING' ? 'warning' : 'danger');
+                        const statusText = s.status === 'NORMAL' ? 'BÌNH THƯỜNG' : (s.status === 'WARNING' ? 'CẢNH BÁO' : 'BÁO ĐỘNG ĐỎ');
+                        return `
+                            <div class="col-md-4 d-flex">
+                                <div class="chart-surface-card p-4 w-100 d-flex flex-column justify-content-between" style="border-radius: 20px;">
+                                    <div>
+                                        <div class="d-flex justify-content-between align-items-start mb-3" style="min-height: 56px;">
+                                            <h5 class="fw-bold mb-0 text-dark" style="font-size: 1.05rem; line-height: 1.35; padding-right: 8px;">${s.ten_tram}</h5>
+                                            <span class="status-badge-soft ${statusClass} flex-shrink-0">${statusText}</span>
+                                        </div>
+                                        <p class="text-muted small mb-3" style="min-height: 44px; line-height: 1.45;">${s.mo_ta}</p>
+                                    </div>
+                                    <div class="mt-auto pt-3 border-top">
+                                        <div class="d-flex justify-content-between small text-muted mb-3">
+                                            <span>Loại: <b class="text-dark">${s.loai_tram}</b></span>
+                                            <span>Vi phạm: <b class="text-dark">${s.violation_count}/3</b></span>
+                                        </div>
+                                        <button class="btn btn-sm btn-outline-primary rounded-pill w-100 py-2 fw-semibold" onclick="selectStation(${s.id}); switchView('dashboard', document.querySelectorAll('.sidebar-link')[0]);">
+                                            Xem chi tiết trạm này
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            });
+        }
+
+        // Cập nhật số liệu lên toàn bộ giao diện AQUA
+        function updateDashboardUI(data) {
+            const ph = (data.ph !== undefined && data.ph !== null) ? Number(data.ph) : 7.0;
+            const doVal = (data.do !== undefined && data.do !== null) ? Number(data.do) : 6.0;
+            const tss = (data.tss !== undefined && data.tss !== null) ? Number(data.tss) : 30.0;
+            const ntu = (data.ntu !== undefined ? data.ntu : (data.do_duc !== undefined ? data.do_duc : 25.0));
+            const temp = (data.temp !== undefined ? data.temp : (data.nhiet_do !== undefined ? data.nhiet_do : 28.0));
+            const level = (data.level !== undefined ? data.level : (data.muc_nuoc !== undefined ? data.muc_nuoc : 1.5));
+            const violations = data.violation_count !== undefined ? data.violation_count : 0;
+            const safeCount = data.safe_count !== undefined ? data.safe_count : 0;
+
+            // 1. Cập nhật 6 thẻ đo đạc chi tiết (Water Quality Metrics)
+            document.getElementById('val-ph').innerText = ph.toFixed(2);
+            document.getElementById('val-do').innerText = doVal.toFixed(2);
+            document.getElementById('val-tss').innerText = tss.toFixed(1);
+            document.getElementById('val-ntu').innerText = Number(ntu).toFixed(1);
+            document.getElementById('val-temp').innerText = Number(temp).toFixed(1);
+            document.getElementById('val-level').innerText = Number(level).toFixed(2);
+
+            // 2. Cập nhật 4 Circular Metric Cards
+            document.getElementById('quad-val-level').innerHTML = `${Number(level).toFixed(2)} <span class="metric-big-unit">m</span>`;
+            document.getElementById('quad-val-do').innerHTML = `${doVal.toFixed(2)} <span class="metric-big-unit">mg/L</span>`;
+            document.getElementById('quad-val-violations').innerHTML = `${violations}/3 <span class="metric-big-unit">Lần</span>`;
+            document.getElementById('quad-desc-violations').innerText = `Bộ đếm vi phạm liên tiếp • An toàn ${safeCount}/2`;
+
+            // Thay đổi màu sắc thẻ vi phạm nếu có nguy cơ
+            const ringV = document.getElementById('quad-ring-violation');
+            const innerV = document.getElementById('quad-inner-violation');
+            const numV = document.getElementById('quad-val-violations');
+
+            if (data.violation_count === 0) {
+                ringV.style.borderColor = '#10b981';
+                innerV.style.background = '#ecfdf5';
+                innerV.style.color = '#10b981';
+                numV.style.color = '#10b981';
+            } else if (data.violation_count < 3) {
+                ringV.style.borderColor = '#f59e0b';
+                innerV.style.background = '#fffbeb';
+                innerV.style.color = '#f59e0b';
+                numV.style.color = '#f59e0b';
+            } else {
+                ringV.style.borderColor = '#ef4444';
+                innerV.style.background = '#fef2f2';
+                innerV.style.color = '#ef4444';
+                numV.style.color = '#ef4444';
+            }
+
+            // 3. Cập nhật Chỉ số WQI
+            if (data.wqi !== undefined) {
+                const wqiNum = Math.round(data.wqi);
+                document.getElementById('quad-val-wqi').innerHTML = `${wqiNum} <span class="metric-big-unit">Điểm</span>`;
+                document.getElementById('donut-val-score').innerText = wqiNum;
+
+                const quadDesc = document.getElementById('quad-desc-wqi');
+                const donutLabel = document.getElementById('donut-val-label');
+                const tooltipText = document.getElementById('donut-tooltip-text');
+
+                let wqiColor = '#0284c7';
+                let labelText = 'Rất tốt (Mức A)';
+                let tooltipDesc = 'Nước rất sạch, sử dụng tốt cho cấp nước sinh hoạt';
+
+                if (wqiNum >= 90) {
+                    wqiColor = '#0ea5e9';
+                    labelText = 'Rất tốt (Mức A)';
+                    tooltipDesc = 'Nước rất sạch, dùng cho sinh hoạt';
+                } else if (wqiNum >= 75) {
+                    wqiColor = '#10b981';
+                    labelText = 'Tốt (Mức B)';
+                    tooltipDesc = 'Đạt chuẩn bảo vệ thủy sinh & sinh hoạt';
+                } else if (wqiNum >= 50) {
+                    wqiColor = '#f59e0b';
+                    labelText = 'Trung bình (Mức C)';
+                    tooltipDesc = 'Chất lượng trung bình, dùng tưới tiêu';
+                } else if (wqiNum >= 25) {
+                    wqiColor = '#ea580c';
+                    labelText = 'Kém (Mức D)';
+                    tooltipDesc = 'Chất lượng kém, cần xử lý';
+                } else {
+                    wqiColor = '#ef4444';
+                    labelText = 'Ô nhiễm nặng (Mức E)';
+                    tooltipDesc = 'Nguy hại môi trường nghiêm trọng!';
+                }
+
+                quadDesc.innerText = `${labelText} • ${tooltipDesc}`;
+                donutLabel.innerText = labelText;
+                donutLabel.style.color = wqiColor;
+                tooltipText.innerText = tooltipDesc;
+
+                // Cập nhật biểu đồ Donut
+                if (chartDonut) {
+                    chartDonut.data.datasets[0].data = [wqiNum, Math.max(0, 100 - wqiNum)];
+                    chartDonut.data.datasets[0].backgroundColor = [wqiColor, '#f1f5f9'];
+                    chartDonut.update('none');
+                }
+            }
+
+            // 4. Cập nhật Trạng Thái & Banner Báo Động
+            const banner = document.getElementById('alert-banner');
+            const badge = document.getElementById('header-status-badge');
+            const alertTitle = document.getElementById('alert-title');
+            const alertDetails = document.getElementById('alert-details');
+            const alertBadge = document.getElementById('alert-counter-badge');
+
+            if (data.status === 'NORMAL') {
+                banner.classList.add('d-none');
+                badge.className = "badge status-badge-soft success";
+                badge.innerHTML = `<i class="bi bi-check-circle-fill"></i> BÌNH THƯỜNG`;
+            } else if (data.status === 'WARNING') {
+                banner.classList.remove('d-none');
+                banner.className = "alert-floating-bar is-warning";
+                alertTitle.innerText = "CẢNH BÁO NHẸ: ĐANG THEO DÕI VI PHẠM";
+                alertDetails.innerText = data.reasons.join(" | ") || "Chỉ tiêu ngoài ngưỡng cho phép";
+                alertBadge.className = "badge bg-warning text-dark mono px-3 py-2";
+                alertBadge.innerText = `Theo dõi: ${data.violation_count}/3 lần`;
+                badge.className = "badge status-badge-soft warning";
+                badge.innerHTML = `<i class="bi bi-exclamation-triangle-fill"></i> CẢNH BÁO NHẸ`;
+            } else if (data.status === 'CRITICAL') {
+                banner.classList.remove('d-none');
+                banner.className = "alert-floating-bar is-critical";
+                alertTitle.innerText = "🚨 BÁO ĐỘNG ĐỎ: VƯỢT NGƯỠNG NGHIÊM TRỌNG!";
+                alertDetails.innerText = data.reasons.join(" | ") || "Phát hiện vi phạm liên tiếp 3 lần!";
+                alertBadge.className = "badge bg-danger text-white mono px-3 py-2";
+                alertBadge.innerText = `BÁO ĐỘNG ĐỎ: ${data.violation_count}/3 lần`;
+                badge.className = "badge status-badge-soft danger";
+                badge.innerHTML = `<i class="bi bi-radioactive"></i> BÁO ĐỘNG ĐỎ`;
+                playAlertSound();
+            }
+
+            // 5. Cập nhật Biểu đồ Spline Line Chart (Chỉ số WQI sóng liên tục)
+            if (chartSpline && data.time) {
+                if (chartSpline.data.labels.length > 15) {
+                    chartSpline.data.labels.shift();
+                    chartSpline.data.datasets[0].data.shift();
+                }
+                chartSpline.data.labels.push(data.time);
+                chartSpline.data.datasets[0].data.push(Math.round(data.wqi || 100));
+                chartSpline.update('none');
+            }
+
+            // 6. Cập nhật Biểu đồ nâng cao View Charts
+            if (chart1 && chart2 && data.time) {
+                pushChartData(chart1, data.time, data.ph, data.do);
+                pushChartData2(chart2, data.time, data.tss, data.level, data.temp);
+            }
+        }
+
+        function pushChartData(chart, label, d1, d2) {
+            if (chart.data.labels.length > 20) {
+                chart.data.labels.shift();
+                chart.data.datasets.forEach(ds => ds.data.shift());
+            }
+            chart.data.labels.push(label);
+            chart.data.datasets[0].data.push(d1);
+            chart.data.datasets[1].data.push(d2);
+            chart.update('none');
+        }
+
+        function pushChartData2(chart, label, d1, d2, d3) {
+            if (chart.data.labels.length > 20) {
+                chart.data.labels.shift();
+                chart.data.datasets.forEach(ds => ds.data.shift());
+            }
+            chart.data.labels.push(label);
+            chart.data.datasets[0].data.push(d1);
+            chart.data.datasets[1].data.push(d2);
+            chart.data.datasets[2].data.push(d3);
+            chart.update('none');
+        }
+
+        // Tải nhật ký cảnh báo
+        function loadAlerts() {
+            const st = document.getElementById('filter-alert-station') ? document.getElementById('filter-alert-station').value : 'all';
+            let url = '/api/alerts';
+            if (st !== 'all') url += `?tram_id=${st}`;
+
+            fetch(url)
+            .then(res => res.json())
+            .then(alerts => {
+                const tbody = document.getElementById('alerts-table-body');
+                if (!tbody) return;
+
+                if (alerts.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Chưa có cảnh báo vi phạm nào. Môi trường nước đang trong trạng thái an toàn.</td></tr>';
+                    document.getElementById('header-bell-dot').classList.add('d-none');
+                    return;
+                }
+
+                document.getElementById('header-bell-dot').classList.remove('d-none');
+                tbody.innerHTML = alerts.map(a => {
+                    const isCrit = a.muc_do === 'CRITICAL';
+                    const badgeClass = isCrit ? 'danger' : 'warning';
+                    const label = isCrit ? 'BÁO ĐỘNG ĐỎ' : 'CẢNH BÁO NHẸ';
+                    return `
+                        <tr>
+                            <td class="mono small">${a.thoi_gian}</td>
+                            <td><strong>${a.ten_tram}</strong></td>
+                            <td><span class="text-danger fw-bold">${a.thong_so}</span></td>
+                            <td class="mono fw-bold">${a.gia_tri}</td>
+                            <td class="mono text-muted small">${a.nguong_cho_phep}</td>
+                            <td><span class="status-badge-soft ${badgeClass}">${label}</span></td>
+                            <td><span class="badge bg-secondary mono">${a.trang_thai}</span></td>
+                        </tr>
+                    `;
+                }).join('');
+            });
+        }
+
+        // Tải lịch sử đo đạc
+        function loadHistory() {
+            fetch(`/api/stations/${currentSelectedStation}/history?limit=50`)
+            .then(res => res.json())
+            .then(data => {
+                const tbody = document.getElementById('history-table-body');
+                if (!tbody) return;
+
+                if (!data || data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted py-4">Chưa có dữ liệu lịch sử đo đạc.</td></tr>';
+                    return;
+                }
+
+                const reversed = [...data].reverse().slice(0, 50);
+                tbody.innerHTML = reversed.map(r => {
+                    const ph = (r.ph !== undefined && r.ph !== null) ? Number(r.ph).toFixed(2) : '--';
+                    const doVal = (r.do !== undefined && r.do !== null) ? Number(r.do).toFixed(2) : '--';
+                    const tss = (r.tss !== undefined && r.tss !== null) ? Number(r.tss).toFixed(1) : '--';
+                    const temp = (r.temp !== undefined ? r.temp : r.nhiet_do);
+                    const tempStr = (temp !== undefined && temp !== null) ? Number(temp).toFixed(1) : '--';
+                    const level = (r.level !== undefined ? r.level : r.muc_nuoc);
+                    const levelStr = (level !== undefined && level !== null) ? Number(level).toFixed(2) : '--';
+                    const wqiNum = (r.wqi !== undefined && r.wqi !== null) ? Math.round(r.wqi) : 100;
+                    let wqiClass = (wqiNum >= 75) ? 'text-success' : ((wqiNum >= 50) ? 'text-warning' : 'text-danger');
+                    let wqiLabel = 'Rất tốt';
+                    if (wqiNum < 25) wqiLabel = 'Ô nhiễm nặng';
+                    else if (wqiNum < 50) wqiLabel = 'Kém';
+                    else if (wqiNum < 75) wqiLabel = 'Trung bình';
+                    else if (wqiNum < 90) wqiLabel = 'Tốt';
+
+                    return `
+                        <tr>
+                            <td class="mono text-muted">${r.id}</td>
+                            <td class="mono small">${r.thoi_gian || '--'}</td>
+                            <td><b>Trạm 0${r.tram_id}</b></td>
+                            <td class="mono">${ph}</td>
+                            <td class="mono">${doVal}</td>
+                            <td class="mono">${tss}</td>
+                            <td class="mono">${tempStr}</td>
+                            <td class="mono">${levelStr}</td>
+                            <td class="mono fw-bold ${wqiClass}">${wqiNum}</td>
+                            <td><span class="badge bg-light text-dark border">${wqiLabel}</span></td>
+                        </tr>
+                    `;
+                }).join('');
+            })
+            .catch(err => {
+                console.error("Lỗi nạp lịch sử:", err);
+                const tbody = document.getElementById('history-table-body');
+                if (tbody) tbody.innerHTML = `<tr><td colspan="10" class="text-center text-danger py-4">Lỗi tải dữ liệu: ${err.message}</td></tr>`;
+            });
+        }
+
+        // Kích hoạt kịch bản giả lập
+        function triggerScenario(sc) {
+            fetch(`/api/station/${currentSelectedStation}/simulate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ scenario: sc })
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log("Kích hoạt kịch bản:", sc, data);
+            });
+        }
+
+        // Reset hệ thống
+        function resetDemo() {
+            fetch('/reset', { method: 'POST' })
+            .then(res => res.json())
+            .then(() => {
+                document.getElementById('alert-banner').classList.add('d-none');
+                selectStation(currentSelectedStation);
+            });
+        }
+
+        // Xóa cảnh báo
+        function clearAlerts() {
+            if (confirm("Bạn có chắc chắn muốn xóa toàn bộ lịch sử cảnh báo không?")) {
+                fetch('/api/alerts/clear', { method: 'POST' })
+                .then(() => loadAlerts());
+            }
+        }
+
+        function playAlertSound() {
+            const audio = document.getElementById('alarm-sound');
+            if (audio) {
+                audio.play().catch(() => {});
+            }
+        }
+
+        function handleSearch(val) {
+            // Hỗ trợ tìm kiếm nhanh trạm hoặc chuyển view
+            val = val.toLowerCase().trim();
+            if (val.includes('1') || val.includes('sài gòn')) selectStation(1);
+            else if (val.includes('2') || val.includes('đồng nai')) selectStation(2);
+            else if (val.includes('3') || val.includes('trị an')) selectStation(3);
+        }
+
+        // ========================================================
+        // KẾT NỐI SERVER-SENT EVENTS (SSE) REALTIME STREAM
+        // ========================================================
+        const eventSource = new EventSource('/stream');
+        eventSource.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            if (data.type === 'reset') {
+                document.getElementById('alert-banner').classList.add('d-none');
+                loadStations();
+                return;
+            }
+
+            loadStations();
+            if (data.tram_id === currentSelectedStation) {
+                updateDashboardUI(data);
+                loadAlerts();
+            }
+        };
+
+        // Khởi động trang web
+        document.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+            loadStations();
+            selectStation(1);
+            loadAlerts();
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

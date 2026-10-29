@@ -1,0 +1,165 @@
+MÔN HỌC: INTERNET OF THINGS (IoT)
+Nhóm chủ đề 6 – Giám sát môi trường (Environmental Monitoring)
+BÁO CÁO GIAI ĐOẠN 2
+Đề tài 51: Hệ thống giám sát chất lượng nước sông, hồ
+Nội dung giai đoạn 2: Thiết kế hệ thống — mô phỏng phần cứng ESP32 bằng Wokwi, phát triển trên Visual Studio Code
+Nhóm thực hiện:
+Nhóm 8 
+Đề tài:
+Số 51 – Hệ thống giám sát chất lượng nước sông, hồ
+GVHD:
+Đinh Huy Hoàng
+Giai đoạn nộp:
+Giai đoạn 2 – Thiết kế hệ thống 
+1. Tóm tắt kết quả giai đoạn 1
+Ở giai đoạn 1, nhóm đã khảo sát thực trạng ô nhiễm nước sông, hồ tại Việt Nam, tham khảo các nghiên cứu/hệ thống IoT giám sát chất lượng nước liên quan, và xác định phạm vi bài toán. Các kết luận chính được sử dụng làm cơ sở thiết kế ở giai đoạn 2 như sau:
+Mục tiêu: xây dựng hệ thống giám sát chất lượng nước sông, hồ theo thời gian thực, tự động so sánh với ngưỡng cho phép và cảnh báo khi phát hiện dấu hiệu ô nhiễm.
+Chỉ tiêu giám sát: pH, oxy hòa tan (DO), độ đục/TSS, nhiệt độ, mực nước.
+Điều kiện triển khai: do chưa có cảm biến/phần cứng thật, hệ thống được hiện thực bằng mô phỏng phần cứng ESP32 trên nền tảng Wokwi, phát triển bằng Visual Studio Code theo đúng yêu cầu của giảng viên.
+Yêu cầu chức năng chính: thu thập dữ liệu định kỳ, so sánh ngưỡng QCVN, hiển thị trạng thái, cảnh báo, lưu trữ lịch sử.
+2. Thiết kế kiến trúc hệ thống
+Hệ thống được thiết kế theo mô hình 3 lớp quen thuộc của một hệ thống IoT. Điểm khác biệt so với bản thiết kế trước là lớp cảm biến (Edge) không còn là một script phần mềm giả lập đơn thuần, mà là firmware thật chạy trên vi điều khiển ESP32 — chỉ khác là ESP32 này được mô phỏng ảo trên nền tảng Wokwi thay vì là phần cứng vật lý:
+Hình 1. Sơ đồ kiến trúc hệ thống — ESP32 mô phỏng trên Wokwi, phát triển bằng VS Code
+2.1 Mô tả từng lớp
+Tier 1 – ESP32 mô phỏng (Wokwi): firmware viết bằng ngôn ngữ C++ (Arduino framework) trong Visual Studio Code, chạy trên một board ESP32 ảo. Board này được "gắn" các cảm biến ảo: biến trở (potentiometer) mô phỏng tín hiệu analog của cảm biến pH/độ đục/DO, cảm biến DHT22 mô phỏng nhiệt độ nước, cảm biến siêu âm HC-SR04 mô phỏng đo mực nước. ESP32 ảo có WiFi mô phỏng (mạng "Wokwi-GUEST") kết nối ra Internet thật.
+Tier 2 – MQTT Broker công khai: vì bản mô phỏng ESP32 chạy trên máy chủ của Wokwi (kể cả khi mở qua VS Code) chứ không chạy trên máy tính của nhóm, nó không thể kết nối tới một broker cài local (localhost). Do đó nhóm dùng broker công khai, miễn phí, không cần đăng ký: broker.hivemq.com (phương án chính) hoặc test.mosquitto.org (dự phòng), cả hai đều qua cổng 1883.
+Tier 3 – Server xử lý & Dashboard: chạy trên máy tính của nhóm, dùng script Python/Node.js subscribe cùng broker công khai và cùng tiền tố topic với ESP32 (vd. nhom8-dt51/tram1/...), so sánh dữ liệu với ngưỡng QCVN, lưu trữ và hiển thị lên Dashboard.
+2.2 Sơ đồ chân kết nối cảm biến mô phỏng (ESP32)
+Cảm biến (mô phỏng)
+Chân ESP32
+Ghi chú
+Biến trở giả lập pH
+GPIO 34 (ADC1)
+Đọc analogRead(), quy đổi ra thang pH 0–14
+Biến trở giả lập độ đục/TSS
+GPIO 35 (ADC1)
+Đọc analogRead(), quy đổi ra 0–200 NTU (giá trị mô phỏng)
+Biến trở giả lập DO
+GPIO 32 (ADC1)
+Đọc analogRead(), quy đổi ra 0–10 mg/l
+DHT22 (nhiệt độ)
+GPIO 4 (chân SDA)
+Dùng thư viện DHT sensor library, chỉ lấy giá trị nhiệt độ
+HC-SR04 (mực nước)
+GPIO 5 (Trig), GPIO 18 (Echo)
+Đo khoảng cách từ cảm biến đến mặt nước, quy đổi ra mực nước
+3. Công cụ phát triển: Visual Studio Code và Wokwi
+Theo yêu cầu của giảng viên, đồ án được phát triển trên Visual Studio Code kết hợp nền tảng mô phỏng phần cứng Wokwi (wokwi.com). Vai trò cụ thể của từng công cụ:
+Visual Studio Code: trình soạn thảo mã nguồn, nơi nhóm viết firmware C++ cho ESP32 (file sketch.ino), quản lý thư viện và mã nguồn phần Server/Dashboard.
+Wokwi: nền tảng mô phỏng vi điều khiển và linh kiện điện tử miễn phí (dùng cho mục đích học tập/cá nhân), cho phép chạy thử firmware ESP32 với cảm biến ảo mà không cần mua sắm phần cứng thật, hỗ trợ mô phỏng WiFi có kết nối Internet thật (dùng được MQTT, HTTP...).
+Wokwi for VS Code (extension): cho phép chạy mô phỏng Wokwi trực tiếp trong Visual Studio Code thay vì phải mở trình duyệt riêng, tích hợp với PlatformIO/Arduino extension để biên dịch firmware.
+Nhóm đã chuẩn bị sẵn 3 file cấu hình cho project Wokwi, đính kèm theo báo cáo này:
+diagram.json — khai báo sơ đồ mạch (ESP32 + các cảm biến ảo và cách nối dây).
+sketch.ino — firmware C++ đọc cảm biến và gửi dữ liệu qua MQTT.
+libraries.txt — danh sách thư viện Arduino cần cài (PubSubClient, DHT sensor library, Adafruit Unified Sensor).
+Project có thể chạy trực tiếp trên trình duyệt tại wokwi.com, hoặc mở trong Visual Studio Code (đã cài extension Wokwi for VS Code) để đúng với yêu cầu môi trường phát triển của giảng viên.
+4. Lựa chọn công nghệ cho từng thành phần
+Thành phần
+Công nghệ / Công cụ
+Vai trò
+ESP32 firmware (Edge)
+C++ (Arduino framework), thư viện WiFi.h, PubSubClient, DHT sensor library — viết trong VS Code, mô phỏng trên Wokwi
+Đọc cảm biến ảo và publish dữ liệu lên MQTT Broker theo chu kỳ
+MQTT Broker (Gateway)
+broker.hivemq.com (chính) / test.mosquitto.org (dự phòng), cổng 1883, không cần đăng ký
+Trung chuyển dữ liệu giữa ESP32 mô phỏng và Server qua Internet thật
+Server xử lý
+Python (paho-mqtt, sqlite3) hoặc Node.js (mqtt, sqlite3/better-sqlite3)
+Subscribe dữ liệu, đối chiếu ngưỡng QCVN, lưu trữ và phát cảnh báo
+Cơ sở dữ liệu
+SQLite (file .db nhẹ, không cần cài server riêng) hoặc file CSV
+Lưu lịch sử đo và log cảnh báo để tra cứu
+Dashboard giám sát
+HTML/CSS/JavaScript + Chart.js, hoặc Python Streamlit/Flask
+Hiển thị trạng thái trạm, biểu đồ theo thời gian thực và cảnh báo
+5. Thiết kế luồng dữ liệu và xử lý cảnh báo
+Luồng xử lý dữ liệu của hệ thống được thiết kế theo trình tự sau:
+Sinh dữ liệu: firmware trên ESP32 mô phỏng đọc giá trị từ các cảm biến ảo theo chu kỳ (mặc định mỗi 5 giây để tiện demo), đóng gói kết quả.
+Truyền dữ liệu: ESP32 publish từng chỉ tiêu lên MQTT Broker công khai theo topic riêng (vd. nhom8-dt51/tram1/ph).
+Xử lý tại Server: Server (chạy trên máy tính nhóm) subscribe toàn bộ topic, nhận dữ liệu và so sánh với bảng ngưỡng QCVN bên dưới.
+Ghi log & lưu trữ: toàn bộ dữ liệu đo (kể cả trong ngưỡng) được lưu vào cơ sở dữ liệu để phục vụ tra cứu lịch sử; nếu vượt ngưỡng, ghi thêm một bản ghi cảnh báo riêng.
+Cập nhật Dashboard: Dashboard đọc dữ liệu mới nhất (qua API/WebSocket hoặc đọc trực tiếp CSDL) để cập nhật trạng thái màu và biểu đồ theo thời gian thực.
+Cảnh báo: nếu một chỉ tiêu vượt ngưỡng liên tục trong nhiều lần đo kế tiếp (vd. 3 lần liên tiếp), Dashboard hiển thị cảnh báo đỏ tại trạm tương ứng.
+5.1 Ngưỡng cảnh báo tham chiếu
+Chỉ tiêu
+Ngưỡng tham chiếu
+Nguồn / Ghi chú
+pH
+6,0 – 8,5
+QCVN 08:2023/BTNMT, Bảng 2 (sông/suối) và Bảng 3 (hồ/ao/đầm), mức B
+Oxy hòa tan (DO)
+≥ 5,0 mg/l
+QCVN 08:2023/BTNMT, mức B. Dưới ngưỡng này, chất lượng nước rơi xuống mức C/D theo quy chuẩn
+Tổng chất rắn lơ lửng (TSS)
+≤ 100 mg/l (sông) / ≤ 15 mg/l (hồ)
+QCVN 08:2023/BTNMT, mức B. TSS là thông số chính thức; cảm biến độ đục (NTU, mô phỏng bằng biến trở) dùng để ước lượng TSS
+Nhiệt độ nước
+24 – 32 °C (tham khảo)
+QCVN 08 không quy định thông số này; nhóm tự đề xuất mức tham khảo cho vùng khí hậu nhiệt đới để phát hiện xả nước nóng bất thường
+Mực nước
+Theo mốc giả lập của trạm
+Thông số thủy văn vận hành, không thuộc QCVN 08 (chất lượng nước); do nhóm tự định nghĩa để mô phỏng cảnh báo lũ/khô hạn
+6. Thiết kế cơ sở dữ liệu
+Cơ sở dữ liệu được thiết kế đơn giản với 3 bảng chính, đủ để lưu thông tin trạm, dữ liệu đo và lịch sử cảnh báo:
+6.1 Bảng tram (thông tin trạm quan trắc)
+Trường
+Kiểu dữ liệu
+Mô tả
+id
+INTEGER (khóa chính)
+Mã trạm
+ten_tram
+TEXT
+Tên/vị trí trạm quan trắc (giả lập)
+mo_ta
+TEXT
+Ghi chú vị trí (đầu nguồn, giữa dòng, gần khu dân cư...)
+6.2 Bảng do_luong (dữ liệu đo)
+Trường
+Kiểu dữ liệu
+Mô tả
+id
+INTEGER (khóa chính)
+Mã bản ghi
+tram_id
+INTEGER (khóa ngoại)
+Liên kết tới bảng tram
+thoi_gian
+DATETIME
+Thời điểm đo
+ph, do, do_duc, nhiet_do, muc_nuoc
+REAL
+Giá trị các chỉ tiêu đo được (khớp với topic MQTT của ESP32)
+trang_thai
+TEXT
+Bình thường / Cảnh báo nhẹ / Vượt ngưỡng
+6.3 Bảng canh_bao (lịch sử cảnh báo)
+Trường
+Kiểu dữ liệu
+Mô tả
+id
+INTEGER (khóa chính)
+Mã cảnh báo
+tram_id
+INTEGER (khóa ngoại)
+Trạm phát sinh cảnh báo
+thoi_gian
+DATETIME
+Thời điểm cảnh báo
+chi_tieu
+TEXT
+Chỉ tiêu vượt ngưỡng (pH, DO, độ đục...)
+gia_tri
+REAL
+Giá trị đo được tại thời điểm cảnh báo
+7. Thiết kế giao diện Dashboard
+Dashboard được thiết kế đơn giản, dễ theo dõi, gồm 3 khu vực chính:
+Khu vực danh sách trạm: hiển thị các trạm quan trắc dưới dạng thẻ (card) hoặc danh sách, mỗi trạm có chấm màu trạng thái — xanh (bình thường), vàng (cảnh báo nhẹ), đỏ (vượt ngưỡng nghiêm trọng).
+Khu vực biểu đồ: biểu đồ đường (line chart) hiển thị xu hướng từng chỉ tiêu (pH, DO, độ đục, nhiệt độ, mực nước) theo thời gian thực khi chọn một trạm cụ thể.
+Khu vực cảnh báo: danh sách các cảnh báo gần nhất (thời gian, trạm, chỉ tiêu, giá trị), có thể lọc theo trạm hoặc theo khoảng thời gian.
+Giao diện được xây dựng để chạy trực tiếp trên trình duyệt của máy tính cá nhân, không yêu cầu cài đặt phức tạp, phù hợp cho việc demo trước lớp.
+8. Kế hoạch giai đoạn 3
+Hoàn thiện và kiểm thử firmware ESP32 trên Wokwi (chạy thử, sửa lỗi biên dịch nếu có, tinh chỉnh giá trị mô phỏng).
+Cài đặt/kiểm tra kết nối tới MQTT Broker công khai từ cả ESP32 (Wokwi) và Server (máy tính nhóm).
+Viết script Server xử lý và xây dựng Dashboard theo thiết kế ở mục 6–7.
+Kiểm thử tích hợp toàn bộ hệ thống, chuẩn bị 2 kịch bản demo (nước đạt chuẩn / ô nhiễm giả lập bằng cách chỉnh biến trở trên Wokwi).
