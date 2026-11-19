@@ -164,126 +164,177 @@ def init_db():
     conn.commit()
     conn.close()
 
+def _lerp(x, x0, x1, y0, y1):
+    """Nội suy tuyến tính (linear interpolation) giữa 2 điểm neo."""
+    if x1 == x0:
+        return y0
+    return y0 + (y1 - y0) * (x - x0) / (x1 - x0)
+
+
+def _q_ph(ph):
+    """
+    Tính điểm chất lượng pH bằng nội suy tuyến tính giữa các điểm neo.
+    pH tốt nhất: 6.5–8.5 → 100 điểm.
+    pH < 4.0 hoặc > 11.0 → 0 điểm (độc hại tuyệt đối).
+    Nội suy mượt giữa các mức, không nhảy bậc đột ngột.
+    """
+    # Bảng neo: (giá trị pH, điểm q)
+    # Trục axit (pH tăng từ 0 → 7)
+    anchors_acid = [(0.0, 0.0), (4.0, 0.0), (4.5, 8.0), (5.0, 18.0),
+                    (5.5, 38.0), (6.0, 65.0), (6.5, 100.0)]
+    # Trục kiềm (pH tăng từ 7 → 14)
+    anchors_base = [(8.5, 100.0), (9.0, 65.0), (9.5, 38.0), (10.0, 18.0),
+                    (10.5, 8.0), (11.0, 0.0), (14.0, 0.0)]
+
+    if ph <= 7.0:  # Dùng bảng axit
+        anchors = anchors_acid
+    else:          # Dùng bảng kiềm
+        anchors = anchors_base
+
+    # Tìm đoạn chứa ph và nội suy
+    for i in range(len(anchors) - 1):
+        x0, y0 = anchors[i]
+        x1, y1 = anchors[i + 1]
+        if x0 <= ph <= x1:
+            return _lerp(ph, x0, x1, y0, y1)
+
+    # Ngoài phạm vi → clamp
+    if ph <= 0.0 or ph >= 14.0:
+        return 0.0
+    return anchors[-1][1] if ph > anchors[-1][0] else anchors[0][1]
+
+
+def _q_do(do_val):
+    """
+    Tính điểm chất lượng DO bằng nội suy tuyến tính.
+    DO ≥ 7.5 mg/L → 100 điểm (bão hòa, lý tưởng cho cá).
+    DO = 0 mg/L → 0 điểm (chết ngộp hoàn toàn).
+    """
+    anchors = [(0.0, 0.0), (2.0, 10.0), (3.0, 22.0), (4.0, 42.0),
+               (5.0, 65.0), (6.0, 85.0), (7.5, 100.0)]
+
+    if do_val >= 7.5:
+        return 100.0
+    if do_val <= 0.0:
+        return 0.0
+
+    for i in range(len(anchors) - 1):
+        x0, y0 = anchors[i]
+        x1, y1 = anchors[i + 1]
+        if x0 <= do_val <= x1:
+            return _lerp(do_val, x0, x1, y0, y1)
+    return 0.0
+
+
+def _q_tss(tss, loai_tram="Sông"):
+    """
+    Tính điểm chất lượng TSS bằng nội suy tuyến tính.
+    Phân biệt tiêu chuẩn Sông (mức B: ≤100 mg/L) và Hồ (mức B: ≤15 mg/L).
+    """
+    if loai_tram == "Hồ":
+        # Tiêu chuẩn hồ nghiêm ngặt hơn
+        anchors = [(0.0, 100.0), (10.0, 100.0), (15.0, 78.0), (25.0, 55.0),
+                   (40.0, 32.0), (70.0, 15.0), (120.0, 0.0)]
+    else:  # Sông
+        anchors = [(0.0, 100.0), (25.0, 100.0), (50.0, 82.0), (100.0, 62.0),
+                   (150.0, 38.0), (200.0, 18.0), (280.0, 0.0)]
+
+    if tss <= anchors[0][0]:
+        return anchors[0][1]
+    if tss >= anchors[-1][0]:
+        return 0.0
+
+    for i in range(len(anchors) - 1):
+        x0, y0 = anchors[i]
+        x1, y1 = anchors[i + 1]
+        if x0 <= tss <= x1:
+            return _lerp(tss, x0, x1, y0, y1)
+    return 0.0
+
+
+def _q_temp(temp):
+    """
+    Tính điểm chất lượng nhiệt độ bằng nội suy tuyến tính.
+    24–32°C → 100 điểm (vùng lý tưởng khí hậu nhiệt đới).
+    <10°C hoặc >42°C → 0 điểm (chết sinh vật thủy sinh).
+    """
+    # Phía lạnh (temp tăng lên đến vùng tốt)
+    anchors_cold = [(5.0, 0.0), (10.0, 10.0), (15.0, 38.0), (20.0, 68.0), (24.0, 100.0)]
+    # Phía nóng (temp tăng khỏi vùng tốt)
+    anchors_hot  = [(32.0, 100.0), (35.0, 72.0), (38.0, 42.0), (40.0, 20.0), (42.0, 0.0)]
+
+    if 24.0 <= temp <= 32.0:
+        return 100.0
+    if temp < 24.0:
+        if temp <= 5.0:
+            return 0.0
+        for i in range(len(anchors_cold) - 1):
+            x0, y0 = anchors_cold[i]
+            x1, y1 = anchors_cold[i + 1]
+            if x0 <= temp <= x1:
+                return _lerp(temp, x0, x1, y0, y1)
+    else:  # temp > 32.0
+        if temp >= 42.0:
+            return 0.0
+        for i in range(len(anchors_hot) - 1):
+            x0, y0 = anchors_hot[i]
+            x1, y1 = anchors_hot[i + 1]
+            if x0 <= temp <= x1:
+                return _lerp(temp, x0, x1, y0, y1)
+    return 0.0
+
+
 def calculate_wqi(data, loai_tram="Sông"):
     """
-    Tính chỉ số chất lượng nước tổng hợp WQI (Water Quality Index) theo QCVN 08:2023 & QĐ 1456/QĐ-TCMT:
-    Áp dụng Nguyên lý yếu tố giới hạn (Liebig's Law of the Minimum) để triệt tiêu hiệu ứng che khuất (Eclipsing Effect):
-    Thang điểm: 0 - 100
-    - >= 90: Rất tốt (Mức A - Nước rất sạch, dùng cho sinh hoạt)
-    - 75 - 89: Tốt (Mức B - Đạt chuẩn bảo vệ thủy sinh & sinh hoạt qua xử lý)
-    - 50 - 74: Trung bình (Mức C - Dùng cho nông nghiệp, tưới tiêu)
-    - 25 - 49: Kém (Mức D - Giao thông thủy, cần xử lý)
-    - < 25: Ô nhiễm nặng (Mức E - Nguy hiểm, nguồn nước độc hại)
+    Tính chỉ số chất lượng nước tổng hợp WQI (Water Quality Index).
+    Phương pháp: Nội suy tuyến tính (Linear Interpolation) + q_min Gate.
+
+    Căn cứ: QCVN 08:2023/BTNMT & QĐ 1456/QĐ-TCMT (Nguyên lý yếu tố giới hạn).
+
+    Thang điểm: 0 – 100
+      >= 90 : Rất tốt  (Mức A) — Dùng cho sinh hoạt
+      75–89 : Tốt      (Mức B) — Sinh hoạt qua xử lý / bảo vệ thủy sinh
+      50–74 : Trung bình        — Nông nghiệp, tưới tiêu
+      25–49 : Kém               — Giao thông thủy, cần xử lý
+       < 25 : Ô nhiễm nặng      — Nguy hiểm, không dùng được
     """
-    # 1. Điểm pH (Trọng số 0.30)
-    ph = data.get("ph", 7.0)
-    if 6.5 <= ph <= 8.5:
-        q_ph = 100.0
-    elif (6.0 <= ph < 6.5) or (8.5 < ph <= 9.0):
-        q_ph = 75.0
-    elif (5.5 <= ph < 6.0) or (9.0 < ph <= 9.5):
-        q_ph = 45.0
-    elif (5.0 <= ph < 5.5) or (9.5 < ph <= 10.0):
-        q_ph = 20.0
-    elif (4.0 <= ph < 5.0) or (10.0 < ph <= 11.0):
-        q_ph = 10.0
+    ph      = data.get("ph",   7.0)
+    do_val  = data.get("do",   6.0)
+    tss     = data.get("tss",  30.0)
+    temp    = data.get("temp", 28.0)
+
+    # ── BƯỚC 1: Tính q_i cho từng chỉ tiêu bằng nội suy tuyến tính ──────────
+    q_ph   = _q_ph(ph)
+    q_do   = _q_do(do_val)
+    q_tss  = _q_tss(tss, loai_tram)
+    q_temp = _q_temp(temp)
+
+    # ── BƯỚC 2: Tổng hợp trọng số (Weighted Arithmetic Mean) ─────────────────
+    # Trọng số: DO (0.35) > pH (0.30) > TSS (0.25) > Nhiệt độ (0.10)
+    # Lý do: DO & pH là 2 chỉ tiêu sinh tử trực tiếp đến hệ sinh thái thủy sinh.
+    wqi_raw = (0.35 * q_do) + (0.30 * q_ph) + (0.25 * q_tss) + (0.10 * q_temp)
+
+    # ── BƯỚC 3: q_min Gate — Nguyên lý yếu tố giới hạn ─────────────────────
+    # "Một xích yếu nhất quyết định sức mạnh của cả chuỗi."
+    # Nếu BẤT KỲ chỉ tiêu nào cực tệ, WQI tổng hợp không thể cao hơn nó nhiều.
+    q_min = min(q_ph, q_do, q_tss, q_temp)
+
+    if q_min == 0.0:
+        # Độc hại tuyệt đối (pH<4, DO=0…) → WQI = 0
+        wqi_final = 0.0
+    elif q_min < 20.0:
+        # Ô nhiễm nghiêm trọng → cap không vượt q_min + 5 (vẫn trong vùng Ô nhiễm nặng)
+        wqi_final = min(wqi_raw, q_min + 5.0)
+    elif q_min < 45.0:
+        # Ô nhiễm vừa → cap không vượt q_min + 15 (tránh vươn sang Trung bình/Tốt)
+        wqi_final = min(wqi_raw, q_min + 15.0)
     else:
-        # Axit cực mạnh (pH < 4.0) hoặc kiềm cực mạnh (pH > 11.0)
-        q_ph = 0.0
+        # Tất cả chỉ tiêu ở mức chấp nhận được → không giới hạn thêm
+        wqi_final = wqi_raw
 
-    # 2. Điểm DO (Trọng số 0.35)
-    do_val = data.get("do", 6.0)
-    if do_val >= 6.0:
-        q_do = 100.0
-    elif do_val >= 5.0:
-        q_do = 80.0
-    elif do_val >= 4.0:
-        q_do = 50.0
-    elif do_val >= 3.0:
-        q_do = 30.0
-    elif do_val >= 2.0:
-        q_do = 15.0
-    else:
-        q_do = 5.0
+    wqi_score = int(round(max(0.0, min(100.0, wqi_final))))
 
-    # 3. Điểm TSS (Trọng số 0.25)
-    tss = data.get("tss", 30.0)
-    if loai_tram == "Hồ":
-        if tss <= 10.0:
-            q_tss = 100.0
-        elif tss <= 15.0:
-            q_tss = 80.0
-        elif tss <= 30.0:
-            q_tss = 50.0
-        elif tss <= 50.0:
-            q_tss = 25.0
-        elif tss <= 100.0:
-            q_tss = 10.0
-        else:
-            q_tss = 0.0
-    else:  # Sông
-        if tss <= 25.0:
-            q_tss = 100.0
-        elif tss <= 50.0:
-            q_tss = 85.0
-        elif tss <= 100.0:
-            q_tss = 70.0
-        elif tss <= 150.0:
-            q_tss = 40.0
-        elif tss <= 200.0:
-            q_tss = 20.0
-        else:
-            q_tss = 5.0
-
-    # 4. Điểm Nhiệt độ (Trọng số 0.10)
-    temp = data.get("temp", 28.0)
-    if 24.0 <= temp <= 32.0:
-        q_temp = 100.0
-    elif 20.0 <= temp <= 35.0:
-        q_temp = 75.0
-    elif 15.0 <= temp <= 38.0:
-        q_temp = 40.0
-    else:
-        q_temp = max(5.0, 100.0 - abs(temp - 28.0) * 8.0)
-
-    # Tổng hợp trọng số cơ sở
-    wqi_raw = 0.35 * q_do + 0.30 * q_ph + 0.25 * q_tss + 0.10 * q_temp
-    wqi_score = int(round(wqi_raw))
-
-    # =========================================================================
-    # ÁP DỤNG NGUYÊN LÝ YẾU TỐ GIỚI HẠN (Liebig's Law of the Minimum - QĐ 1456/QĐ-TCMT):
-    # Một nguồn nước không thể được coi là "Trung bình" hay "Tốt" nếu có bất kỳ một
-    # chỉ số sinh tử nào đang ở ngưỡng hủy diệt môi trường sinh thái (Eclipsing Effect).
-    # =========================================================================
-    
-    # Giới hạn trần theo pH (Axit hoặc kiềm cực đoan)
-    if ph < 4.5 or ph > 10.5:
-        # Axit đậm đặc (như ắc quy, nước thải xi mạ) hoặc kiềm cực mạnh -> Nguy hại chết người
-        wqi_score = min(wqi_score, 12)
-    elif ph < 5.0 or ph > 10.0:
-        wqi_score = min(wqi_score, 20)
-    elif ph < 5.5 or ph > 9.5:
-        wqi_score = min(wqi_score, 40)
-
-    # Giới hạn trần theo DO (Oxy hòa tan)
-    if do_val < 2.0:
-        # Ngạt thở cấp tính, cá chết nổi hàng loạt
-        wqi_score = min(wqi_score, 15)
-    elif do_val < 3.5:
-        wqi_score = min(wqi_score, 35)
-
-    # Giới hạn trần theo TSS (Độ đục / Chất rắn lơ lửng)
-    if tss > 250.0:
-        wqi_score = min(wqi_score, 20)
-    elif tss > 160.0:
-        wqi_score = min(wqi_score, 45)
-
-    # Giới hạn trần theo Nhiệt độ
-    if temp > 40.0 or temp < 10.0:
-        wqi_score = min(wqi_score, 30)
-
-    wqi_score = max(0, min(100, wqi_score))
-
+    # ── BƯỚC 4: Gán nhãn ──────────────────────────────────────────────────────
     if wqi_score >= 90:
         wqi_label = "Rất tốt (Mức A)"
     elif wqi_score >= 75:
@@ -449,11 +500,21 @@ def process_data(data):
             else:
                 state["current_status"] = "WARNING"
         else:
-            state["violation_count"] = 0
+            # Tích lũy số lần an toàn liên tiếp
             state["safe_count"] += 1
-            if state["safe_count"] >= 2 or state["current_status"] == "WARNING":
+
+            if state["current_status"] == "WARNING":
+                # WARNING: 1 lần sạch là đủ để về NORMAL
                 state["current_status"] = "NORMAL"
+                state["violation_count"] = 0
                 state["last_violation_reasons"] = []
+            elif state["safe_count"] >= 2:
+                # CRITICAL cần 2 lần sạch liên tiếp mới về NORMAL
+                state["current_status"] = "NORMAL"
+                state["violation_count"] = 0
+                state["last_violation_reasons"] = []
+            # Nếu safe_count < 2 và đang CRITICAL: giữ nguyên CRITICAL,
+            # violation_count KHÔNG reset — UI vẫn hiển thị đúng lịch sử
 
         # Nếu đạt trạng thái Báo động đỏ CRITICAL thì gửi Telegram
         if state["current_status"] == "CRITICAL":
@@ -501,6 +562,7 @@ def process_data(data):
 
         packet = {
             "tram_id": tram_id,
+            "ten_tram": ten_tram,
             "thoi_gian": now_str,
             "time": now_str.split(" ")[1],
             "ph": data.get("ph", 7.0),
@@ -606,6 +668,72 @@ def start_mqtt():
             time.sleep(5)
 
 # ----------------- FLASK ROUTES -----------------
+@app.route('/api/wqi/explain', methods=['GET'])
+def wqi_explain():
+    """
+    API debug WQI — Trả về chi tiết từng bước tính toán.
+    Dùng thẳng trên trình duyệt khi thuyết trình:
+      GET /api/wqi/explain?ph=5.5&do=3.0&tss=120&temp=35&loai=Sông
+    → Hiển thị q_ph, q_do, q_tss, q_temp, q_min, wqi_raw, wqi_final, label
+    """
+    try:
+        ph    = request.args.get('ph',   default=7.0,  type=float)
+        do    = request.args.get('do',   default=6.5,  type=float)
+        tss   = request.args.get('tss',  default=30.0, type=float)
+        temp  = request.args.get('temp', default=28.0, type=float)
+        loai  = request.args.get('loai', default='Sông', type=str)
+
+        q_ph   = round(_q_ph(ph),   1)
+        q_do   = round(_q_do(do),   1)
+        q_tss  = round(_q_tss(tss, loai), 1)
+        q_temp = round(_q_temp(temp), 1)
+
+        wqi_raw = round(0.35 * q_do + 0.30 * q_ph + 0.25 * q_tss + 0.10 * q_temp, 1)
+        q_min   = min(q_ph, q_do, q_tss, q_temp)
+
+        if q_min == 0.0:
+            wqi_final = 0.0
+            gate_applied = "Gate 1: q_min=0 → WQI=0 (Độc hại tuyệt đối)"
+        elif q_min < 20.0:
+            wqi_final = round(min(wqi_raw, q_min + 5.0), 1)
+            gate_applied = f"Gate 2: q_min={q_min}<20 → cap tại {q_min}+5={q_min+5}"
+        elif q_min < 45.0:
+            wqi_final = round(min(wqi_raw, q_min + 15.0), 1)
+            gate_applied = f"Gate 3: q_min={q_min}<45 → cap tại {q_min}+15={q_min+15}"
+        else:
+            wqi_final = wqi_raw
+            gate_applied = "Không áp dụng gate (tất cả chỉ tiêu tốt)"
+
+        wqi_score = int(round(max(0.0, min(100.0, wqi_final))))
+        wqi_score_check, wqi_label = calculate_wqi(
+            {"ph": ph, "do": do, "tss": tss, "temp": temp}, loai
+        )
+
+        yeu_to_gioi_han = {
+            "q_ph": q_ph, "q_do": q_do, "q_tss": q_tss, "q_temp": q_temp
+        }
+        min_key = min(yeu_to_gioi_han, key=yeu_to_gioi_han.get)
+
+        return jsonify({
+            "input": {"ph": ph, "do": do, "tss": tss, "temp": temp, "loai_tram": loai},
+            "buoc_1_diem_thanh_phan": {
+                "q_pH":   {"diem": q_ph,   "trong_so": "30%"},
+                "q_DO":   {"diem": q_do,   "trong_so": "35%"},
+                "q_TSS":  {"diem": q_tss,  "trong_so": "25%"},
+                "q_Temp": {"diem": q_temp, "trong_so": "10%"}
+            },
+            "buoc_2_tong_hop_trong_so": {"wqi_raw": wqi_raw},
+            "buoc_3_q_min_gate": {
+                "q_min": q_min,
+                "yeu_to_gioi_han": min_key,
+                "gate_applied": gate_applied,
+                "wqi_final": wqi_final
+            },
+            "ket_qua": {"wqi": wqi_score, "nhan": wqi_label}
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -747,18 +875,74 @@ def export_csv():
 
 @app.route('/reset', methods=['POST'])
 def reset_system():
-    """Reset trạng thái cảnh báo và bộ đếm vi phạm về 0"""
+    """Reset trạng thái cảnh báo và bộ đếm vi phạm về 0, bổ sung bản ghi sạch chuẩn hóa"""
     global station_states, latest_packets_queue
     with lock:
-        for s_id in station_states:
+        now_dt = datetime.now()
+        now_str = now_dt.strftime("%Y-%m-%d %H:%M:%S")
+        time_str = now_str.split(" ")[1]
+
+        conn = get_db_connection()
+        for s_id in [1, 2, 3]:
+            loai = "Hồ" if s_id == 2 else "Sông"
+            norm_sample = {
+                "ph": 7.35,
+                "do": 6.80,
+                "ntu": 8.0 if loai == "Hồ" else 25.0,
+                "tss": 10.0 if loai == "Hồ" else 30.0,
+                "temp": 28.0,
+                "level": 1.50,
+                "wqi": 98
+            }
+            # Ghi một bản ghi đạt chuẩn vào CSDL để lịch sử tải lại cũng là NORMAL
+            try:
+                conn.execute("""
+                    INSERT INTO do_luong (tram_id, thoi_gian, ph, do, do_duc, tss, nhiet_do, muc_nuoc, trang_thai, wqi)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (s_id, now_str, norm_sample["ph"], norm_sample["do"], norm_sample["ntu"], norm_sample["tss"], norm_sample["temp"], norm_sample["level"], "NORMAL", 98))
+            except Exception as e:
+                print(f"[Reset DB Error] {e}")
+
+            clean_packet = {
+                "tram_id": s_id,
+                "ten_tram": station_metadata.get(s_id, {}).get("ten_tram", f"Trạm 0{s_id}"),
+                "thoi_gian": now_str,
+                "time": time_str,
+                "ph": norm_sample["ph"],
+                "do": norm_sample["do"],
+                "ntu": norm_sample["ntu"],
+                "tss": norm_sample["tss"],
+                "temp": norm_sample["temp"],
+                "level": norm_sample["level"],
+                "wqi": 98,
+                "wqi_label": "Tốt",
+                "status": "NORMAL",
+                "violation_count": 0,
+                "safe_count": 0,
+                "reasons": []
+            }
+
+            if s_id not in station_states:
+                station_states[s_id] = {}
             station_states[s_id]["violation_count"] = 0
             station_states[s_id]["safe_count"] = 0
             station_states[s_id]["current_status"] = "NORMAL"
             station_states[s_id]["last_violation_reasons"] = []
-        
-        # Gửi thông điệp reset tới tất cả các client SSE đang mở
+            station_states[s_id]["latest_data"] = clean_packet
+
+            # Gửi gói tin sạch tức thời qua SSE
+            for q in list(sse_clients):
+                try:
+                    q.put_nowait(clean_packet)
+                except Exception:
+                    pass
+
+        conn.commit()
+        conn.close()
+
+        # Gửi sự kiện type='reset'
         reset_event = {
-            "tram_id": 1,
+            "type": "reset",
             "status": "NORMAL",
             "violation_count": 0,
             "safe_count": 0,
@@ -769,7 +953,8 @@ def reset_system():
                 q.put_nowait(reset_event)
             except Exception:
                 pass
-    return jsonify({"status": "success", "message": "Đã reset bộ đếm và trạng thái toàn bộ trạm thành công!"})
+
+    return jsonify({"status": "success", "message": "Đã reset bộ đếm và đưa toàn bộ trạm về trạng thái BÌNH THƯỜNG thành công!"})
 
 @app.route('/api/station/<int:tram_id>/simulate', methods=['POST'])
 def simulate_station(tram_id):
@@ -783,14 +968,24 @@ def simulate_station(tram_id):
     - hot_water: Ô nhiễm nhiệt độ xả thải công nghiệp (Nhiệt độ = 38.5 °C)
     """
     scenario = request.json.get("scenario", "normal") if request.is_json else request.args.get("scenario", "normal")
-    
+
+    # Lấy loại trạm từ DB để điều chỉnh giá trị phù hợp theo QCVN
+    conn_tmp = get_db_connection()
+    row_tmp = conn_tmp.execute("SELECT loai_tram FROM tram WHERE id = ?", (tram_id,)).fetchone()
+    conn_tmp.close()
+    loai_tram_sim = row_tmp["loai_tram"] if row_tmp else "Sông"
+    is_ho = (loai_tram_sim == "Hồ")
+
+    # Kịch bản "Nước Đạt Chuẩn" — tất cả chỉ số đều trong ngưỡng an toàn
+    # TSS Hồ ≤ 15 mg/L (QCVN 08-MT:2023/BTNMT, cột A2 — nguồn cấp sinh hoạt)
+    # TSS Sông ≤ 100 mg/L (cột B1 — tưới tiêu, giao thông thủy)
     sample = {
         "tram_id": tram_id,
-        "ph": 7.35,
-        "do": 6.8,
-        "ntu": 35.0,
-        "tss": 42.0,
-        "temp": 28.5,
+        "ph":    7.35,
+        "do":    6.8,
+        "ntu":   8.0  if is_ho else 35.0,   # NTU thấp cho Hồ
+        "tss":   10.0 if is_ho else 42.0,   # ✅ TSS Hồ = 10 mg/L (< 15), Sông = 42 mg/L (< 100)
+        "temp":  28.5,
         "level": 1.65
     }
 
@@ -815,18 +1010,27 @@ def simulate_station(tram_id):
         sample["temp"] = 26.0
         sample["level"] = 2.88
     elif scenario == "drought":
-        sample["ph"] = 8.10
-        sample["do"] = 4.60
-        sample["ntu"] = 25.0
-        sample["tss"] = 30.0
-        sample["temp"] = 31.0
-        sample["level"] = 0.35
+        sample["ph"]    = 8.10   # Trong ngưỡng ✅
+        sample["do"]    = 5.20   # Đạt chuẩn ✅ (nâng từ 4.6 để kịch bản chỉ vi phạm 1 tiêu chí: Mực nước)
+        sample["ntu"]   = 12.0  if is_ho else 25.0
+        sample["tss"]   = 10.0  if is_ho else 30.0  # ✅ Hồ: 10 mg/L (< 15) | Sông: 30 mg/L (< 100) — vi phạm DUY NHẤT là mực nước
+        sample["temp"]  = 31.0   # OK ✅
+        sample["level"] = 0.35   # Vi phạm Cạn (< 0.5m) ⚠️ — Tiêu chí duy nhất bị kích hoạt
     elif scenario == "hot_water":
-        sample["ph"] = 7.20
-        sample["do"] = 4.10
-        sample["temp"] = 37.8
-        sample["tss"] = 45.0
+        sample["ph"]   = 7.20
+        sample["do"]   = 4.10   # Vi phạm DO (< 5.0) ⚠️ — do nhiệt độ cao làm giảm O2 hòa tan
+        sample["temp"] = 37.8   # Vi phạm nhiệt độ (> 32°C hoặc > 35°C Hồ) ⚠️
+        sample["tss"]  = 10.0  if is_ho else 45.0  # ✅ Hồ: TSS an toàn, chỉ vi phạm Nhiệt độ+DO
+        sample["ntu"]  = 8.0   if is_ho else 30.0
         sample["level"] = 1.50
+    elif scenario == "lake_algae":
+        # Hồ phú dưỡng: tảo nở hoa → pH kiềm cao (tảo quang hợp), DO thiếu ban đêm, TSS vượt ngưỡng Hồ
+        sample["ph"]    = 9.20   # Kiềm do tảo quang hợp mạnh — vi phạm pH (> 8.5) ⚠️
+        sample["do"]    = 3.80   # Thiếu oxy ban đêm (tảo hô hấp) — vi phạm DO (< 5.0) ⚠️
+        sample["ntu"]   = 23.0
+        sample["tss"]   = 28.0   # Vượt ngưỡng Hồ (> 15 mg/L) ⚠️ — Nhưng OK với Sông
+        sample["temp"]  = 32.5   # Hơi nóng thuận lợi cho tảo — vi phạm nhiệt độ (> 32°C) ⚠️
+        sample["level"] = 1.80
     elif request.is_json and "data" in request.json:
         sample.update(request.json["data"])
 

@@ -904,7 +904,7 @@
                 </div>
                 <div class="d-flex align-items-center gap-2">
                     <span id="alert-counter-badge" class="badge bg-danger text-white mono px-3 py-2">3/3 Lần</span>
-                    <button class="btn btn-sm btn-light fw-bold" onclick="resetDemo()">Khắc phục</button>
+                    <button class="btn btn-sm btn-light fw-bold" onclick="showRemediation()"><i class="bi bi-tools me-1"></i>Khắc phục</button>
                 </div>
             </div>
 
@@ -1340,6 +1340,97 @@
                             </div>
                         </button>
                     </div>
+
+                    <div class="col-md-6 col-lg-4">
+                        <button class="scenario-card-btn" onclick="triggerScenario('lake_algae')">
+                            <div class="scenario-icon" style="background: #f0fdf4; color: #16a34a;">
+                                <i class="bi bi-water"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold text-dark">7. Hồ Phú Dưỡng (Tảo Nở Hoa)</div>
+                                <div class="text-muted small">pH 9.2 kiềm, DO thiếu, TSS vượt ngưỡng Hồ — 4 tiêu chí</div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- WQI Breakdown Panel -->
+                <div class="chart-surface-card mt-4" id="wqi-breakdown-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h5 class="fw-bold text-dark mb-0" style="font-size:1rem;">
+                                <i class="bi bi-bar-chart-steps text-primary me-2"></i>Phân Tích WQI — Chi Tiết Từng Thành Phần
+                            </h5>
+                            <p class="text-muted small mb-0 mt-1">Cập nhật tự động sau mỗi lần nhận dữ liệu • Nguyên lý yếu tố giới hạn (q_min Gate)</p>
+                        </div>
+                        <span id="wqi-breakdown-badge" class="status-badge-soft success">--/100</span>
+                    </div>
+
+                    <div class="row g-3" id="wqi-breakdown-bars">
+                        <!-- pH -->
+                        <div class="col-6 col-md-3">
+                            <div class="p-3 rounded-3" style="background:#f8fafc; border:1px solid #e2e8f0;">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="fw-semibold text-dark" style="font-size:.85rem;">pH</span>
+                                    <span class="fw-bold" id="bd-q-ph" style="font-size:.95rem; color:#0284c7;">--</span>
+                                </div>
+                                <div class="progress" style="height:8px; border-radius:4px;">
+                                    <div class="progress-bar" id="bd-bar-ph" role="progressbar" style="width:0%; background:#0284c7; border-radius:4px;"></div>
+                                </div>
+                                <div class="text-muted mt-1" style="font-size:.72rem;">Trọng số 30%</div>
+                            </div>
+                        </div>
+                        <!-- DO -->
+                        <div class="col-6 col-md-3">
+                            <div class="p-3 rounded-3" style="background:#f8fafc; border:1px solid #e2e8f0;">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="fw-semibold text-dark" style="font-size:.85rem;">DO</span>
+                                    <span class="fw-bold" id="bd-q-do" style="font-size:.95rem; color:#0284c7;">--</span>
+                                </div>
+                                <div class="progress" style="height:8px; border-radius:4px;">
+                                    <div class="progress-bar" id="bd-bar-do" role="progressbar" style="width:0%; background:#0284c7; border-radius:4px;"></div>
+                                </div>
+                                <div class="text-muted mt-1" style="font-size:.72rem;">Trọng số 35%</div>
+                            </div>
+                        </div>
+                        <!-- TSS -->
+                        <div class="col-6 col-md-3">
+                            <div class="p-3 rounded-3" style="background:#f8fafc; border:1px solid #e2e8f0;">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="fw-semibold text-dark" style="font-size:.85rem;">TSS</span>
+                                    <span class="fw-bold" id="bd-q-tss" style="font-size:.95rem; color:#0284c7;">--</span>
+                                </div>
+                                <div class="progress" style="height:8px; border-radius:4px;">
+                                    <div class="progress-bar" id="bd-bar-tss" role="progressbar" style="width:0%; background:#0284c7; border-radius:4px;"></div>
+                                </div>
+                                <div class="text-muted mt-1" style="font-size:.72rem;">Trọng số 25%</div>
+                            </div>
+                        </div>
+                        <!-- Nhiệt độ -->
+                        <div class="col-6 col-md-3">
+                            <div class="p-3 rounded-3" style="background:#f8fafc; border:1px solid #e2e8f0;">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="fw-semibold text-dark" style="font-size:.85rem;">Nhiệt độ</span>
+                                    <span class="fw-bold" id="bd-q-temp" style="font-size:.95rem; color:#0284c7;">--</span>
+                                </div>
+                                <div class="progress" style="height:8px; border-radius:4px;">
+                                    <div class="progress-bar" id="bd-bar-temp" role="progressbar" style="width:0%; background:#0284c7; border-radius:4px;"></div>
+                                </div>
+                                <div class="text-muted mt-1" style="font-size:.72rem;">Trọng số 10%</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gate info row -->
+                    <div class="mt-3 p-3 rounded-3" id="bd-gate-box" style="background:#f0f9ff; border:1px solid #bae6fd; display:none;">
+                        <div class="d-flex align-items-start gap-2">
+                            <i class="bi bi-shield-exclamation text-warning mt-1" style="font-size:1.1rem; flex-shrink:0;"></i>
+                            <div>
+                                <div class="fw-semibold text-dark" style="font-size:.85rem;">q_min Gate đang hoạt động</div>
+                                <div class="text-muted" id="bd-gate-text" style="font-size:.8rem;">--</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -1643,6 +1734,11 @@
             const violations = data.violation_count !== undefined ? data.violation_count : 0;
             const safeCount = data.safe_count !== undefined ? data.safe_count : 0;
 
+            // Cập nhật trạng thái vi phạm cho modal khắc phục
+            if (data.reasons && Array.isArray(data.reasons)) currentViolationReasons = data.reasons;
+            if (data.ten_tram) currentStationName = data.ten_tram;
+
+
             // 1. Cập nhật 6 thẻ đo đạc chi tiết (Water Quality Metrics)
             document.getElementById('val-ph').innerText = ph.toFixed(2);
             document.getElementById('val-do').innerText = doVal.toFixed(2);
@@ -1892,6 +1988,53 @@
             });
         }
 
+        // ================================================================
+        // WQI BREAKDOWN — Hiển thị chi tiết từng thành phần điểm
+        // ================================================================
+        function updateWqiBreakdown(ph, doVal, tss, temp, loai) {
+            const params = new URLSearchParams({ ph, do: doVal, tss, temp, loai: loai || 'Sông' });
+            fetch(`/api/wqi/explain?${params}`)
+            .then(r => r.json())
+            .then(d => {
+                const bp   = d.buoc_1_diem_thanh_phan;
+                const gate = d.buoc_3_q_min_gate;
+                const wqi  = d.ket_qua.wqi;
+
+                const color = (q) => q >= 75 ? '#10b981' : q >= 45 ? '#f59e0b' : '#ef4444';
+                const setBar = (idScore, idBar, q) => {
+                    const el  = document.getElementById(idScore);
+                    const bar = document.getElementById(idBar);
+                    if (!el || !bar) return;
+                    el.textContent   = Math.round(q) + ' đ';
+                    el.style.color   = color(q);
+                    bar.style.width  = q + '%';
+                    bar.style.background = color(q);
+                };
+
+                setBar('bd-q-ph',   'bd-bar-ph',   bp.q_pH.diem);
+                setBar('bd-q-do',   'bd-bar-do',   bp.q_DO.diem);
+                setBar('bd-q-tss',  'bd-bar-tss',  bp.q_TSS.diem);
+                setBar('bd-q-temp', 'bd-bar-temp', bp.q_Temp.diem);
+
+                const badge = document.getElementById('wqi-breakdown-badge');
+                if (badge) {
+                    badge.textContent = `WQI ${wqi}/100`;
+                    badge.className   = 'status-badge-soft ' + (wqi >= 75 ? 'success' : wqi >= 50 ? 'warning' : 'danger');
+                }
+
+                const gateBox = document.getElementById('bd-gate-box');
+                const gateTxt = document.getElementById('bd-gate-text');
+                if (gateBox && gateTxt) {
+                    if (gate.gate_applied && !gate.gate_applied.includes('Không')) {
+                        gateBox.style.display = 'block';
+                        gateTxt.textContent   = `Yếu tố giới hạn: ${gate.yeu_to_gioi_han} (${gate.q_min} đ) — ${gate.gate_applied}`;
+                    } else {
+                        gateBox.style.display = 'none';
+                    }
+                }
+            }).catch(() => {});
+        }
+
         // Kích hoạt kịch bản giả lập
         function triggerScenario(sc) {
             fetch(`/api/station/${currentSelectedStation}/simulate`, {
@@ -1901,7 +2044,7 @@
             })
             .then(res => res.json())
             .then(data => {
-                console.log("Kích hoạt kịch bản:", sc, data);
+                console.log("Kịch bản:", sc, data);
             });
         }
 
@@ -1911,11 +2054,171 @@
             .then(res => res.json())
             .then(() => {
                 document.getElementById('alert-banner').classList.add('d-none');
+                currentViolationReasons = [];
+                const badge = document.getElementById('header-status-badge');
+                if (badge) {
+                    badge.className = "badge status-badge-soft success";
+                    badge.innerHTML = `<i class="bi bi-check-circle-fill"></i> BÌNH THƯỜNG`;
+                }
+                loadStations();
                 selectStation(currentSelectedStation);
+                loadAlerts();
             });
         }
 
-        // Xóa cảnh báo
+        // ================================================================
+        // NÚT KHẮC PHỤC — hiển thị modal hướng dẫn theo từng vi phạm
+        // ================================================================
+
+        // Bộ tra cứu hướng dẫn theo từng thông số vi phạm
+        const REMEDIATION_DB = {
+            'pH': {
+                icon: 'bi-droplet-half',
+                color: '#6f42c1',
+                title: 'Điều chỉnh độ pH về ngưỡng an toàn (6.0 – 8.5)',
+                steps: [
+                    { icon: '🧪', text: 'Lấy mẫu nước tại điểm xả thải nghi ngờ để xác định nguồn gây acid/kiềm.' },
+                    { icon: '🏭', text: '<b>Nếu pH quá thấp (acid):</b> Bơm dung dịch vôi sữa (Ca(OH)₂) hoặc soda ash (Na₂CO₃) vào điểm xử lý để nâng pH.' },
+                    { icon: '🧫', text: '<b>Nếu pH quá cao (kiềm):</b> Bổ sung acid sunfuric loãng (H₂SO₄) hoặc CO₂ để hạ pH.' },
+                    { icon: '🔒', text: 'Rà soát và đình chỉ hoạt động xả thải công nghiệp chưa qua xử lý trong vùng lưu vực.' },
+                    { icon: '📋', text: 'Báo cáo cơ quan môi trường địa phương (Sở TNMT) trong vòng 24 giờ.' }
+                ]
+            },
+            'DO': {
+                icon: 'bi-wind',
+                color: '#0d6efd',
+                title: 'Khôi phục lượng Oxy hòa tan (DO ≥ 5.0 mg/L)',
+                steps: [
+                    { icon: '💨', text: 'Triển khai thiết bị sục khí (aerator) hoặc máy khuấy trộn tại khu vực thiếu oxy.' },
+                    { icon: '🌿', text: 'Giảm tải chất hữu cơ bằng cách xử lý nước thải sinh hoạt/công nghiệp trước khi xả ra nguồn.' },
+                    { icon: '🚫', text: 'Dừng ngay hoạt động nuôi trồng thủy sản quá mật độ trong vùng lân cận.' },
+                    { icon: '📡', text: 'Tăng tần suất quan trắc DO lên mỗi 15 phút để theo dõi phục hồi.' },
+                    { icon: '🧬', text: 'Nếu có tảo nở hoa (algal bloom), sử dụng algicide được cấp phép và bơm không khí.' }
+                ]
+            },
+            'TSS': {
+                icon: 'bi-layers-half',
+                color: '#fd7e14',
+                title: 'Giảm hàm lượng Chất rắn lơ lửng (TSS)',
+                steps: [
+                    { icon: '🪣', text: '<b>Hồ / Hồ chứa:</b> Lắp đặt hệ thống lắng cát và lưới lọc tại cửa vào hồ để giữ lại trầm tích.' },
+                    { icon: '🌊', text: 'Xây dựng bờ chắn bùn (silt curtain) xung quanh vùng bị ô nhiễm để khoanh vùng.' },
+                    { icon: '🚜', text: 'Nạo vét bùn đáy và loại bỏ chất rắn lắng đọng định kỳ theo kế hoạch.' },
+                    { icon: '🌱', text: 'Trồng thực vật thủy sinh (cỏ vetiver, sậy) tại bờ để giữ đất chống xói mòn.' },
+                    { icon: '🏗️', text: 'Yêu cầu các công trình xây dựng ven sông/hồ lắp hố lắng bùn tạm thời đúng quy định.' }
+                ]
+            },
+            'NTU': {
+                icon: 'bi-water',
+                color: '#20c997',
+                title: 'Giảm độ đục (Turbidity)',
+                steps: [
+                    { icon: '🧲', text: 'Áp dụng hóa chất keo tụ (phèn nhôm Al₂(SO₄)₃ hoặc PAC) để kết tụ hạt lơ lửng.' },
+                    { icon: '🕒', text: 'Cho nước lắng tĩnh tối thiểu 2–4 giờ, sau đó dùng lưới lọc thu cặn bề mặt.' },
+                    { icon: '🌧️', text: 'Nếu do mưa lũ: giảm lưu lượng xả từ hồ điều tiết và tạm dừng lấy nước thô.' },
+                    { icon: '🗺️', text: 'Xác định điểm xả thải đất đá/bùn từ công trình thượng nguồn, yêu cầu dừng ngay.' }
+                ]
+            },
+            'Nhiệt độ': {
+                icon: 'bi-thermometer-high',
+                color: '#dc3545',
+                title: 'Hạ nhiệt độ nước về ngưỡng sinh thái (≤ 32°C)',
+                steps: [
+                    { icon: '🌡️', text: 'Truy nguyên nguồn nước thải nhiệt: nhà máy điện, khu công nghiệp — yêu cầu hạ nhiệt trước khi xả.' },
+                    { icon: '⛅', text: 'Tăng bóng che mặt nước (thực vật thủy sinh ven bờ) để giảm bức xạ mặt trời trực tiếp.' },
+                    { icon: '🔃', text: 'Tăng cường lưu thông dòng chảy để pha loãng nhiệt và tăng trao đổi không khí-nước.' },
+                    { icon: '📏', text: 'Lắp bể làm nguội (cooling pond) bắt buộc đối với cơ sở xả nước nóng > 35°C.' }
+                ]
+            },
+            'Mực nước': {
+                icon: 'bi-align-bottom',
+                color: '#0dcaf0',
+                title: 'Khôi phục mực nước về ngưỡng an toàn',
+                steps: [
+                    { icon: '🌧️', text: '<b>Nếu cạn kiệt (< 0.5m):</b> Mở cống bổ sung nước từ nguồn dự phòng hoặc hồ điều tiết thượng nguồn.' },
+                    { icon: '🌊', text: '<b>Nếu lũ lụt (> 2.5m):</b> Mở van xả lũ theo lịch trình điều tiết — cảnh báo người dân hạ lưu trước 2 giờ.' },
+                    { icon: '📢', text: 'Phát thông báo khẩn cấp đến các hộ dân và hệ thống thủy lợi trong vùng bị ảnh hưởng.' },
+                    { icon: '🏗️', text: 'Kiểm tra ngay độ bền đê, kè và hệ thống thoát nước; ưu tiên gia cố nếu phát hiện hư hỏng.' },
+                    { icon: '🔁', text: 'Lên kế hoạch điều tiết lưu lượng bơm theo thủy văn thời gian thực để ổn định dần mực nước.' }
+                ]
+            }
+        };
+
+        // Ánh xạ từ chuỗi lý do (data.reasons) → key của REMEDIATION_DB
+        function mapReasonToKey(reason) {
+            const r = reason.toLowerCase();
+            if (r.includes('ph'))            return 'pH';
+            if (r.includes('do') || r.includes('oxy')) return 'DO';
+            if (r.includes('tss'))           return 'TSS';
+            if (r.includes('ntu') || r.includes('đục')) return 'NTU';
+            if (r.includes('nhiệt') || r.includes('temp')) return 'Nhiệt độ';
+            if (r.includes('mực') || r.includes('level')) return 'Mực nước';
+            return null;
+        }
+
+        // Trạng thái vi phạm hiện tại (cập nhật theo SSE)
+        let currentViolationReasons = [];
+        let currentStationName = 'Trạm đang giám sát';
+
+        function showRemediation() {
+            const reasons   = currentViolationReasons;
+            const container = document.getElementById('remediation-steps-container');
+            const summary   = document.getElementById('remediation-summary-text');
+            const stName    = document.getElementById('remediation-station-name');
+            const header    = document.getElementById('remediation-header');
+
+            stName.textContent = currentStationName;
+
+            // Lấy danh sách key vi phạm (loại trùng)
+            const keys = [...new Set(reasons.map(mapReasonToKey).filter(Boolean))];
+
+            if (keys.length === 0) {
+                // Không có vi phạm rõ ràng
+                summary.innerHTML = `Hệ thống đang trong tình trạng cảnh báo. Vui lòng kiểm tra lại dữ liệu cảm biến và xem xét tình trạng thực địa.`;
+                container.innerHTML = `<div class="text-muted text-center py-3"><i class="bi bi-search fs-3"></i><br>Không xác định được vi phạm cụ thể.</div>`;
+            } else {
+                summary.innerHTML = `Phát hiện <b>${keys.length}</b> thông số vượt ngưỡng: <b>${keys.join(', ')}</b>. 
+                    Hệ thống đề xuất các biện pháp khắc phục ngay lập tức theo <b>QCVN 08-MT:2023/BTNMT</b>.`;
+                container.innerHTML = '';
+                keys.forEach(key => {
+                    const info = REMEDIATION_DB[key];
+                    if (!info) return;
+                    const card = document.createElement('div');
+                    card.className = 'rounded-3 p-3 border';
+                    card.style.borderLeft = `5px solid ${info.color} !important`;
+                    card.style.background = '#fff';
+                    card.innerHTML = `
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="bi ${info.icon} fs-5" style="color:${info.color}"></i>
+                            <span class="fw-bold" style="color:${info.color};font-size:0.95rem;">${info.title}</span>
+                        </div>
+                        <ol class="mb-0 ps-3" style="font-size:0.88rem;line-height:1.75;">
+                            ${info.steps.map(s => `<li><span class="me-1">${s.icon}</span>${s.text}</li>`).join('')}
+                        </ol>`;
+                    // override border-left với style trực tiếp
+                    card.style.borderLeftColor = info.color;
+                    card.style.borderLeftWidth = '5px';
+                    card.style.borderLeftStyle = 'solid';
+                    container.appendChild(card);
+                });
+            }
+
+            // Điều chỉnh màu header theo mức độ
+            const isCritical = document.getElementById('alert-banner').classList.contains('is-critical');
+            header.style.background = isCritical
+                ? 'linear-gradient(135deg,#dc3545,#b02a37)'
+                : 'linear-gradient(135deg,#fd7e14,#e55a00)';
+
+            new bootstrap.Modal(document.getElementById('remediationModal')).show();
+        }
+
+        // Xác nhận đã xử lý thực địa → đóng modal + reset hệ thống
+        function confirmRemediation() {
+            bootstrap.Modal.getInstance(document.getElementById('remediationModal'))?.hide();
+            resetDemo();
+        }
+
+
         function clearAlerts() {
             if (confirm("Bạn có chắc chắn muốn xóa toàn bộ lịch sử cảnh báo không?")) {
                 fetch('/api/alerts/clear', { method: 'POST' })
@@ -1954,6 +2257,9 @@
             if (data.tram_id === currentSelectedStation) {
                 updateDashboardUI(data);
                 loadAlerts();
+                // Cập nhật WQI Breakdown với dữ liệu mới nhất
+                const loaiTram = data.tram_id === 2 ? 'Hồ' : 'Sông';
+                updateWqiBreakdown(data.ph, data.do, data.tss, data.temp, loaiTram);
             }
         };
 
@@ -1967,5 +2273,60 @@
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- ============================================================ -->
+    <!-- MODAL HƯỚNG DẪN KHẮC PHỤC Ô NHIỄM                          -->
+    <!-- ============================================================ -->
+    <div class="modal fade" id="remediationModal" tabindex="-1" aria-labelledby="remediationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-lg">
+                <!-- Header -->
+                <div class="modal-header text-white py-3" id="remediation-header" style="background: linear-gradient(135deg,#dc3545,#b02a37);">
+                    <div>
+                        <h5 class="modal-title fw-bold mb-0" id="remediationModalLabel">
+                            <i class="bi bi-tools me-2"></i>Hướng Dẫn Khắc Phục Ô Nhiễm
+                        </h5>
+                        <small id="remediation-station-name" class="opacity-75">Trạm đang giám sát</small>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <!-- Body -->
+                <div class="modal-body px-4 py-3">
+                    <!-- Mô tả tình trạng -->
+                    <div class="alert alert-danger d-flex align-items-start gap-2 py-2 mb-3" id="remediation-summary-box">
+                        <i class="bi bi-exclamation-octagon-fill fs-5 mt-1 flex-shrink-0"></i>
+                        <div id="remediation-summary-text" style="font-size:0.9rem;"></div>
+                    </div>
+
+                    <!-- Danh sách hành động -->
+                    <h6 class="fw-bold text-dark mb-3"><i class="bi bi-clipboard2-check-fill text-primary me-2"></i>Các bước khắc phục đề xuất:</h6>
+                    <div id="remediation-steps-container" class="d-flex flex-column gap-3"></div>
+
+                    <!-- Ghi chú QCVN -->
+                    <div class="mt-4 p-3 rounded-3" style="background:#f8f9fa;border-left:4px solid #0d6efd;">
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle-fill text-primary me-1"></i>
+                            Tiêu chuẩn áp dụng: <strong>QCVN 08-MT:2023/BTNMT</strong> — Quy chuẩn kỹ thuật quốc gia về chất lượng nước mặt.
+                            Mọi biện pháp xử lý cần được thực hiện bởi đơn vị kỹ thuật có thẩm quyền.
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="modal-footer border-0 pt-0 pb-3 px-4 gap-2">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-lg me-1"></i>Đóng
+                    </button>
+                    <button type="button" class="btn btn-success fw-bold" onclick="confirmRemediation()">
+                        <i class="bi bi-check2-circle me-1"></i>Xác nhận đã xử lý & Reset hệ thống
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- /MODAL HƯỚNG DẪN KHẮC PHỤC -->
+
 </body>
+
 </html>

@@ -1,20 +1,10 @@
-# 🌊 Hệ Thống Giám Sát Chất Lượng Nước Sông, Hồ
+# 🌊 EIGHT — Hệ Thống Giám Sát Chất Lượng Nước Sông, Hồ
 
-**Đề tài 51 – Nhóm 08 | GVHD: ThS. Đinh Huy Hoàng**  
-Hệ thống IoT giám sát chất lượng nước sông, hồ theo tiêu chuẩn **QCVN 08:2023/BTNMT** và tính toán chỉ số chất lượng nước tổng hợp **WQI (Water Quality Index)** theo thời gian thực.  
-Công nghệ sử dụng: **ESP32 (mô phỏng Wokwi) + MQTT (HiveMQ / Mosquitto) + Python Flask + SSE + SQLite + Chart.js**.
+**Đề tài 51 – Nhóm 08 | GVHD: ThS. Đinh Huy Hoàng | Môn: Internet of Things**
 
----
+Hệ thống IoT giám sát chất lượng nước sông, hồ theo thời gian thực, so sánh tự động với **QCVN 08:2023/BTNMT** và tính toán chỉ số **WQI (Water Quality Index)** bằng phương pháp nội suy tuyến tính + q_min Gate.
 
-## 📋 Mục lục
-
-1. [Cấu trúc dự án](#-cấu-trúc-dự-án)
-2. [Cách chạy nhanh nhất (Khuyên dùng)](#-cách-chạy-nhanh-nhất-1-click)
-3. [Mô phỏng phần cứng ESP32 trên Wokwi](#-mô-phỏng-phần-cứng-esp32-trên-wokwi)
-4. [Các tính năng nâng cấp nổi bật](#-các-tính-năng-nâng-cấp-nổi-bật)
-5. [Quy chuẩn QCVN 08:2023 & Chỉ số WQI](#-quy-chuẩn-qcvn-082023--chỉ-số-wqi)
-6. [Kịch bản chi tiết khi Demo trước lớp](#-kịch-bản-chi-tiết-khi-demo-trước-lớp)
-7. [Xử lý sự cố & Mẹo "cứu nguy" tại giảng đường](#-xử-lý-sự-cố--mẹo-cứu-nguy-tại-giảng-đường)
+**Stack:** `ESP32 Wokwi` → `MQTT HiveMQ` → `Python Flask` → `SSE` → `SQLite WAL` → `Chart.js`
 
 ---
 
@@ -22,129 +12,164 @@ Công nghệ sử dụng: **ESP32 (mô phỏng Wokwi) + MQTT (HiveMQ / Mosquitto
 
 ```
 demo/
-├── run_server.bat          # [MỚI] Script 1-click khởi chạy Server an toàn trên Windows
-├── run_server.ps1          # [MỚI] Script PowerShell khởi chạy Server
-├── test_system.py          # [MỚI] Script kiểm thử tự động toàn diện 9 bài test hệ thống
-├── app.py                  # Backend Flask Server + MQTT Auto-failover + SSE + SQLite WAL + WQI
-├── sketch.ino              # Firmware C++ cho ESP32 Wokwi (tự động chuyển broker dự phòng)
-├── diagram.json            # Sơ đồ kết nối phần cứng và cảm biến ảo Wokwi
-├── libraries.txt           # Danh sách thư viện Arduino cần nạp
-├── water_monitoring.db     # SQLite database (bảng tram, do_luong, canh_bao)
+├── app.py               # Backend Flask: MQTT, WQI, cảnh báo, API, SSE, CSV export
+├── sketch.ino           # Firmware C++ ESP32 Wokwi (5 cảm biến ảo, MQTT failover)
+├── diagram.json         # Sơ đồ kết nối phần cứng Wokwi
+├── libraries.txt        # Thư viện Arduino cần cài
+├── test_system.py       # Bộ kiểm thử tự động 9 bài — chạy: python test_system.py
+├── run_server.bat       # Script 1-click khởi chạy server Windows
+├── water_monitoring.db  # SQLite WAL: bảng tram, do_luong, canh_bao
 ├── templates/
-│   └── index.html          # Web Dashboard Dark UI + Chart.js 5 chỉ tiêu + Web Audio + WQI
-└── README.md               # Sổ tay hướng dẫn & kịch bản demo
+│   └── index.html       # Web Dashboard EIGHT (SSE realtime, Chart.js, WQI Breakdown)
+└── README.md
 ```
 
 ---
 
-## 🚀 Cách chạy nhanh nhất (1-Click)
+## 🚀 Khởi chạy hệ thống
 
-### Cách 1: Dùng file `run_server.bat` (Khuyên dùng khi demo)
-* Chỉ cần **nhấp đúp chuột (Double click)** vào file `run_server.bat`.
-* File sẽ tự động nhận diện đường dẫn Python chuẩn trên máy bạn, kích hoạt CSDL và khởi động Server mà không sợ lỗi Windows execution alias.
-* Sau khi cửa sổ console hiện:
-  ```
-  [*] Đang khởi động Web Server: http://localhost:5000
-  ```
-* Mở trình duyệt Web (Chrome / Edge / Firefox) và truy cập:
-  ```
-  http://localhost:5000
-  ```
+### Cách 1: 1-Click (Khuyên dùng khi demo)
+Double-click file **`run_server.bat`** → chờ console hiện `http://localhost:5000` → mở trình duyệt.
 
-### Cách 2: Chạy thủ công qua terminal
+### Cách 2: Terminal
 ```powershell
+cd "d:\Năm 4\IoT\demo"
 python app.py
-# Hoặc nếu Python mặc định bị alias Windows Store chặn:
-& "C:\Users\Admin\python311\python.exe" app.py
+```
+Mở trình duyệt: **http://localhost:5000**
+
+### Kiểm thử nhanh trước demo
+```powershell
+python test_system.py   # Phải đạt 9/9 PASS
 ```
 
 ---
 
-## 🔌 Mô phỏng phần cứng ESP32 trên Wokwi
+## 🔌 Mô phỏng ESP32 trên Wokwi
 
-1. Truy cập **https://wokwi.com** → Đăng nhập → **New Project** → Chọn **ESP32 (Arduino)**.
-2. **Tab `sketch.ino`**: Dán toàn bộ nội dung file `sketch.ino`.
-3. **Tab `diagram.json`**: Dán toàn bộ nội dung file `diagram.json`.
-4. **Tab `libraries.txt`**: Thêm các thư viện:
+1. Truy cập **https://wokwi.com** → Đăng nhập → New Project → ESP32 (Arduino)
+2. Dán nội dung `sketch.ino` vào tab **sketch.ino**
+3. Dán nội dung `diagram.json` vào tab **diagram.json**
+4. Thêm thư viện (tab **libraries.txt**):
    ```
    PubSubClient
    DHT sensor library
    Adafruit Unified Sensor
    ArduinoJson
    ```
-5. Nhấn nút **Play (▶)** để bắt đầu chạy mô phỏng.
-6. Mở **Serial Monitor** trên Wokwi để xem dữ liệu xuất ra mỗi 5 giây.
+5. Nhấn **▶ Play** → Mở Serial Monitor xem dữ liệu gửi mỗi 5 giây
+
+### Phím tắt Serial Monitor Wokwi (kịch bản nhanh)
+| Phím | Kịch bản |
+|---|---|
+| `1` | Nước đạt chuẩn QCVN 08 (WQI ~100) |
+| `2` | Ô nhiễm axit (pH = 4.1) |
+| `3` | Mưa lũ nước đục (TSS > 100, Mực nước 2.85m) |
+| `4` | Xả thải nhiệt (Nhiệt độ 38.5°C) |
+| `0` | Quay lại đọc từ núm biến trở xoay |
 
 ---
 
-## ✨ Các tính năng nâng cấp nổi bật
+## 📊 Quy chuẩn & Ngưỡng cảnh báo (QCVN 08:2023/BTNMT)
 
-1. **Biểu đồ thời gian thực trực quan hóa cả 5 chỉ tiêu:**
-   * **Biểu đồ Hóa sinh**: Đường xu hướng độ pH (6.0 - 8.5) và Oxy hòa tan DO (≥ 5.0 mg/L).
-   * **Biểu đồ Vật lý & Môi trường**: Tổng chất rắn TSS (≤ 100 mg/L), Nhiệt độ nước (24 - 32°C) và Mực nước (0.5 - 2.5m).
-2. **Chỉ số Chất lượng nước tổng hợp WQI (Water Quality Index):**
-   * Tự động tính toán điểm số từ 0 đến 100 dựa theo trọng số tác động của các chỉ tiêu theo QCVN 08.
-   * Phân cấp trực quan: Rất tốt (Mức A), Tốt (Mức B), Trung bình (Mức C), Kém (Mức D), Ô nhiễm nặng.
-3. **Khả năng chịu lỗi và tự phục hồi cao (Auto-failover):**
-   * Hỗ trợ tự động luân chuyển giữa Broker chính `broker.hivemq.com` và Broker dự phòng `test.mosquitto.org` ở cả ESP32 và Server Python.
-   * CSDL SQLite chạy chế độ **WAL (Write-Ahead Logging)** kết hợp timeout 30s, chống 100% lỗi `database is locked`.
-4. **Cảnh báo đa kênh:**
-   * Banner cảnh báo động nhấp nháy trên Web Dashboard.
-   * Còi âm thanh báo động thời gian thực (Web Audio Synthesizer, có nút bật/tắt âm thanh).
-   * Hỗ trợ thông báo qua Telegram Bot khi có báo động đỏ `CRITICAL`.
-5. **Xuất báo cáo CSV chuẩn Excel tiếng Việt:**
-   * Xuất cả lịch sử đo đạc và lịch sử vi phạm, kèm mã UTF-8 BOM giúp mở trực tiếp trên Microsoft Excel không bị lỗi font tiếng Việt.
+| Chỉ tiêu | Ngưỡng Sông | Ngưỡng Hồ | Cảm biến giả lập |
+|---|---|---|---|
+| **pH** | 6.0 – 8.5 | 6.0 – 8.5 | Biến trở GPIO 34 (0–14) |
+| **DO** | ≥ 5.0 mg/L | ≥ 5.0 mg/L | Biến trở GPIO 35 (0–10 mg/L) |
+| **TSS** | ≤ 100 mg/L | ≤ 15 mg/L | Biến trở GPIO 32 (0–200 NTU × 1.2) |
+| **Nhiệt độ** | 24 – 32 °C | 24 – 32 °C | DHT22 GPIO 4 |
+| **Mực nước** | 0.5 – 2.5 m | 0.5 – 2.5 m | HC-SR04 GPIO 5/18 |
 
 ---
 
-## 📊 Quy chuẩn QCVN 08:2023 & Chỉ số WQI
+## 🧮 Thuật toán WQI — 3 bước
 
-| Chỉ tiêu | Ngưỡng cho phép | Thang đo cảm biến mô phỏng | Ý nghĩa giám sát |
-| :--- | :--- | :--- | :--- |
-| **pH** | **6.0 – 8.5** | 0 – 14 (Biến trở GPIO 34) | Phát hiện nước bị chua/axit hoặc kiềm hóa |
-| **Oxy hòa tan (DO)** | **≥ 5.0 mg/L** | 0 – 10 mg/L (Biến trở GPIO 32) | Đảm bảo hô hấp cho hệ sinh thái thủy sinh |
-| **TSS / Độ đục** | **≤ 100 mg/L** (Sông) / **≤ 15** (Hồ) | 0 – 200 NTU (Biến trở GPIO 35) | Phát hiện nước đục, phù sa hoặc chất thải lơ lửng |
-| **Nhiệt độ nước** | **24 – 32 °C** | 0 – 50 °C (DHT22 GPIO 4) | Phát hiện xả thải nhiệt bất thường |
-| **Mực nước** | **0.5 – 2.5 m** | 0 – 3.0 m (HC-SR04 GPIO 5, 18) | Cảnh báo lũ lụt (> 2.5m) hoặc cạn kiệt (< 0.5m) |
+```
+Bước 1 — Nội suy tuyến tính:
+  q_pH, q_DO, q_TSS, q_Temp ∈ [0, 100]
+  (Dùng bảng neo điểm + nội suy, không nhảy bậc đột ngột)
 
----
+Bước 2 — Tổng hợp trọng số:
+  WQI_raw = 0.35×q_DO + 0.30×q_pH + 0.25×q_TSS + 0.10×q_Temp
 
-## 🎬 Kịch bản chi tiết khi Demo trước lớp
+Bước 3 — q_min Gate (Nguyên lý yếu tố giới hạn):
+  q_min = min(q_pH, q_DO, q_TSS, q_Temp)
+  • q_min = 0   → WQI = 0            (Độc hại tuyệt đối)
+  • q_min < 20  → WQI = min(raw, q_min + 5)
+  • q_min < 45  → WQI = min(raw, q_min + 15)
+  • Còn lại     → WQI = WQI_raw
+```
 
-### Bước 1: Giới thiệu kiến trúc tổng thể (1 phút)
-* *"Kính thưa Thầy và các bạn, nhóm 08 thực hiện Đề tài 51 - Hệ thống IoT giám sát chất lượng nước sông, hồ theo QCVN 08:2023/BTNMT."*
-* *"Hệ thống gồm 3 tầng: Tầng biên (Edge) là firmware ESP32 mô phỏng trên Wokwi kết nối 5 cảm biến ảo; Tầng truyền thông (Middleware) dùng giao thức MQTT qua Broker công khai với cơ chế tự động chuyển broker dự phòng; Tầng ứng dụng (Application) gồm Server Python Flask, CSDL SQLite WAL và Web Dashboard cập nhật thời gian thực bằng SSE."*
+| WQI | Mức | Ý nghĩa |
+|---|---|---|
+| ≥ 90 | Rất tốt (A) | Dùng cho sinh hoạt |
+| 75–89 | Tốt (B) | Sinh hoạt qua xử lý |
+| 50–74 | Trung bình | Nông nghiệp, tưới tiêu |
+| 25–49 | Kém | Giao thông thủy |
+| < 25 | Ô nhiễm nặng | Nguy hiểm |
 
-### Bước 2: Tình huống 1 – Nước đạt chuẩn an toàn (Bình thường)
-* **Thao tác:** Trên Wokwi, để các biến trở ở mức chuẩn (pH ~ 7.2, DO ~ 6.5, NTU ~ 30, DHT22 ~ 28°C, Mực nước ~ 1.5m).
-* **Thuyết minh:** *"Khi các chỉ tiêu nằm trong ngưỡng quy chuẩn, Dashboard hiển thị trạng thái xanh 'BÌNH THƯỜNG', chỉ số WQI đạt 95 - 100 điểm (Mức A/B - Rất tốt), biểu đồ vẽ đường ổn định."*
-
-### Bước 3: Tình huống 2 – Cảnh báo nhẹ (Vàng: 1–2 lần vi phạm)
-* **Thao tác:** Vặn biến trở **Pot pH** về mức thấp (~4.0) hoặc **Pot DO** về thấp (~2.0 mg/L).
-* **Thuyết minh:** *"Khi phát hiện chỉ tiêu vượt ngưỡng lần thứ nhất hoặc thứ hai, hệ thống chưa vội báo động giả để tránh nhiễu cảm biến, mà kích hoạt trạng thái Cảnh báo nhẹ (Vàng) kèm số lần theo dõi 1/3, 2/3."*
-
-### Bước 4: Tình huống 3 – Báo động đỏ (Đỏ: Vi phạm 3 lần liên tiếp)
-* **Thao tác:** Giữ nguyên mức vi phạm qua 15 giây (3 chu kỳ gửi dữ liệu).
-* **Thuyết minh:** *"Khi vi phạm liên tiếp 3 lần, hệ thống chính thức nâng lên mức BÁO ĐỘNG ĐỎ: banner đỏ nhấp nháy, phát còi âm thanh cảnh báo, tự động ghi nhận bản ghi vi phạm vào bảng `canh_bao` trong database."*
-
-### Bước 5: Tình huống 4 – Tự phục hồi về Bình thường
-* **Thao tác:** Xoay núm biến trở trở lại mức bình thường (pH ~ 7.0, DO ~ 6.5).
-* **Thuyết minh:** *"Khi mẫu nước trở lại ngưỡng an toàn liên tục 2 lần đo, hệ thống tự động reset về trạng thái 'BÌNH THƯỜNG' mà không cần người vận hành phải can thiệp thủ công."*
-
-### Bước 6: Tình huống 5 – Mô phỏng cảnh báo Lũ / Hạn hán bằng HC-SR04
-* **Thao tác:** Click vào cảm biến HC-SR04 trên Wokwi, kéo thanh trượt khoảng cách ngắn lại (~10cm) để mực nước dâng > 2.5m -> Kích hoạt cảnh báo Lũ.
-
-### Bước 7: Trình diễn các tính năng nâng cao (30 giây)
-* Bấm chuyển đổi giữa **Trạm 1 (Sông)** và **Trạm 2 (Hồ Trị An)** -> giải thích cơ chế ngưỡng TSS tự động siết chặt từ 100 xuống 15 mg/L theo loại nguồn nước.
-* Bấm nút **"Xuất CSV"** -> Tải file dữ liệu đo đạc và mở lên Excel hiển thị tiếng Việt hoàn hảo.
+### Debug WQI trực tiếp trên trình duyệt
+```
+http://localhost:5000/api/wqi/explain?ph=5.5&do=3.0&tss=120&temp=35&loai=Sông
+```
+→ Trả về JSON chi tiết từng bước: q_pH, q_DO, q_TSS, q_Temp, gate áp dụng, WQI cuối.
 
 ---
 
-## 🛠️ Xử lý sự cố & Mẹo "cứu nguy" tại giảng đường
+## 🚦 Logic cảnh báo 3 cấp
 
-| Tình huống rủi ro | Nguyên nhân | Biện pháp giải quyết tức thời |
-| :--- | :--- | :--- |
-| **Mạng WiFi trường chặn cổng MQTT 1883** | Firewall của trường chặn port IoT ra ngoài | **Mở 4G điện thoại phát WiFi cho laptop kết nối**, hoặc dùng ngay nút **"Giả lập Demo"** có sẵn trên góc phải Dashboard. |
-| **Trình duyệt không kết nối được** | Mở nhầm port Live Server (5500) | Truy cập đúng địa chỉ: `http://localhost:5000`. |
-| **Trang web lưu cache cũ** | Trình duyệt giữ bộ nhớ đệm | Nhấn tổ hợp phím **`Ctrl + Shift + R`** (Hard Reload). |
-| **Muốn kiểm thử nhanh trước khi vào phòng thi** | Cần kiểm tra toàn bộ code xem có lỗi cú pháp hay DB không | Mở terminal gõ: `python test_system.py` để chạy bộ 9 bài test tự động. |
+```
+Vi phạm 1 lần   → 🟡 WARNING  (Cảnh báo nhẹ)
+Vi phạm 3 lần   → 🔴 CRITICAL (Báo động đỏ — ghi DB, Telegram nếu cấu hình)
+Sạch 1 lần      → WARNING → NORMAL   (phục hồi nhanh)
+Sạch 2 lần liên → CRITICAL → NORMAL  (cần 2 lần xác nhận)
+```
+
+---
+
+## 🎬 Kịch bản Demo — 7 kịch bản có sẵn trên Dashboard
+
+| # | Kịch bản | Trigger | WQI dự kiến | Mức |
+|---|---|---|---|---|
+| 1 | Nước đạt chuẩn | `normal` | ~96–100 | 🟦 Rất tốt |
+| 2 | Ô nhiễm axit xả thải | `acid_waste` | ~8–13 | 🔴 Ô nhiễm nặng |
+| 3 | Nước đục sau mưa lũ | `dirty_runoff` | ~40–50 | 🟡 Kém |
+| 4 | Cảnh báo lũ lụt | `flood` | ~45–55 | 🟡 Kém |
+| 5 | Cảnh báo khô hạn | `drought` | ~70–80 | 🟠 Trung bình |
+| 6 | Xả thải nhiệt công nghiệp | `hot_water` | ~50–60 | 🟠 Trung bình |
+| 7 | Hồ phú dưỡng (tảo nở hoa) | `lake_algae` | ~15–25 | 🔴 Ô nhiễm nặng |
+
+---
+
+## 🛠️ Xử lý sự cố khi demo
+
+| Tình huống | Giải pháp |
+|---|---|
+| **Mạng trường chặn cổng 1883** | Dùng 4G phát WiFi, hoặc bấm nút **Giả Lập** trên Dashboard |
+| **Wokwi không kết nối HiveMQ** | ESP32 tự chuyển sang `test.mosquitto.org` sau 4 lần thất bại |
+| **Trang trắng / cache cũ** | `Ctrl + Shift + R` (Hard Reload) |
+| **WQI hiện sai** | Chạy `python test_system.py` kiểm tra — phải 9/9 PASS |
+| **Muốn kiểm tra logic WQI** | Gõ `/api/wqi/explain?ph=...` lên trình duyệt |
+| **Demo không có Wokwi** | Dùng 7 nút kịch bản trong tab **Giả Lập Kịch Bản** |
+
+---
+
+## 📡 API Endpoints
+
+| Method | Endpoint | Mô tả |
+|---|---|---|
+| GET | `/` | Web Dashboard |
+| GET | `/api/stations` | Danh sách trạm + trạng thái |
+| GET | `/api/stations/<id>/history` | Lịch sử đo đạc (limit=50) |
+| GET | `/api/alerts` | Nhật ký cảnh báo |
+| POST | `/api/alerts/clear` | Xóa nhật ký cảnh báo |
+| POST | `/api/station/<id>/simulate` | Kích hoạt kịch bản giả lập |
+| GET | `/api/wqi/explain` | Debug WQI chi tiết từng bước |
+| GET | `/api/export/csv?type=do_luong` | Xuất CSV dữ liệu đo |
+| GET | `/api/export/csv?type=canh_bao` | Xuất CSV cảnh báo |
+| POST | `/reset` | Reset bộ đếm vi phạm |
+| GET | `/stream` | SSE realtime stream |
+
+---
+
+*Nhóm 08 — Đề tài 51 — GVHD: ThS. Đinh Huy Hoàng*

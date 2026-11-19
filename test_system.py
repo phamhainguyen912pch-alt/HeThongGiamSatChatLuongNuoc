@@ -34,20 +34,34 @@ def run_tests():
     conn.close()
 
     # 2. Kiểm thử tính toán WQI
-    print("\n[TEST 2] Kiểm thử tính toán chỉ số WQI theo QCVN 08:2023...")
+    print("\n[TEST 2] Kiểm thử tính toán chỉ số WQI (Nội suy tuyến tính + q_min Gate)...")
+
+    # 2a. Nước sạch lý tưởng → phải >= 90
     wqi_norm, label_norm = app.calculate_wqi({"ph": 7.3, "do": 6.8, "tss": 25.0, "temp": 28.0}, "Sông")
-    print(f"  -> Nước sạch: WQI = {wqi_norm}/100 [{label_norm}]")
+    print(f"  -> Nước sạch lý tưởng (pH=7.3, DO=6.8): WQI = {wqi_norm}/100 [{label_norm}]")
     assert wqi_norm >= 90, f"WQI nước sạch phải >= 90, thực tế: {wqi_norm}"
 
+    # 2b. Ô nhiễm hỗn hợp nặng → phải < 30
     wqi_bad, label_bad = app.calculate_wqi({"ph": 4.2, "do": 2.5, "tss": 160.0, "temp": 38.0}, "Sông")
-    print(f"  -> Nước ô nhiễm hỗn hợp: WQI = {wqi_bad}/100 [{label_bad}]")
-    assert wqi_bad < 50, f"WQI nước ô nhiễm phải < 50, thực tế: {wqi_bad}"
+    print(f"  -> Ô nhiễm hỗn hợp (pH=4.2, DO=2.5, TSS=160): WQI = {wqi_bad}/100 [{label_bad}]")
+    assert wqi_bad < 30, f"WQI ô nhiễm hỗn hợp nặng phải < 30, thực tế: {wqi_bad}"
 
-    # Kiểm tra Nguyên lý yếu tố giới hạn: Axit cực mạnh pH = 1.82 dù các thông số khác hoàn hảo
+    # 2c. Axit cực mạnh pH=1.82, các chỉ tiêu khác hoàn hảo → phải <= 15 (q_min Gate)
     wqi_acid, label_acid = app.calculate_wqi({"ph": 1.82, "do": 6.6, "tss": 0.0, "temp": 28.0}, "Sông")
-    print(f"  -> Axit cực mạnh (pH=1.82): WQI = {wqi_acid}/100 [{label_acid}]")
+    print(f"  -> Axit cực mạnh (pH=1.82, DO=6.6): WQI = {wqi_acid}/100 [{label_acid}]")
     assert wqi_acid <= 15, f"WQI axit cực mạnh pH=1.82 phải <= 15, thực tế: {wqi_acid}"
     assert label_acid == "Ô nhiễm nặng", f"Nhãn phải là Ô nhiễm nặng, thực tế: {label_acid}"
+
+    # 2d. pH biên giới 6.49 → phải gần 100, không nhảy bậc đột ngột
+    wqi_edge, label_edge = app.calculate_wqi({"ph": 6.49, "do": 7.5, "tss": 10.0, "temp": 28.0}, "Sông")
+    print(f"  -> pH biên giới (pH=6.49, DO=7.5): WQI = {wqi_edge}/100 [{label_edge}]")
+    assert wqi_edge >= 85, f"WQI pH=6.49 phải >= 85 (nội suy mượt), thực tế: {wqi_edge}"
+
+    # 2e. DO thấp = 1.5 mg/L → phải <= 20 (q_min Gate vì DO rất tệ)
+    wqi_do_low, label_do_low = app.calculate_wqi({"ph": 7.0, "do": 1.5, "tss": 20.0, "temp": 28.0}, "Sông")
+    print(f"  -> DO cực thấp (DO=1.5 mg/L): WQI = {wqi_do_low}/100 [{label_do_low}]")
+    assert wqi_do_low <= 20, f"WQI DO=1.5 phải <= 20, thực tế: {wqi_do_low}"
+    assert label_do_low == "Ô nhiễm nặng", f"Nhãn DO=1.5 phải là Ô nhiễm nặng, thực tế: {label_do_low}"
 
     # 3. Kiểm thử Test Client Flask
     client = app.app.test_client()
